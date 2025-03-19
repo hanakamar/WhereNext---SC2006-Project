@@ -1,16 +1,18 @@
 {
   "extends": "@tsconfig/react-native/tsconfig.json",
-  "compilerOptions": {
+  "compilerOptions": { 
+    "jsx": "react-native", 
+    "allowJs": true,
+    "moduleResolution": "node",
     "strict": true,
+    "baseUrl": "./",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@components/*": ["components/*"]
     }
   },
   "include": [
     "**/*.ts",
-    "**/*.tsx",
+    "**/S*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ]
