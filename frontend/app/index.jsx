@@ -6,8 +6,9 @@ export default function Index() {
     <View style={styles.container}>
       <Text style={styles.title}>Edit app/index.tsx to edit this screen.</Text>
       <Text>Hello Everyone, this is just a sample page</Text>
-      <Link href="/Authentication/login">Login</Link>
-      <Link href="/Authentication/signup">Sign Up</Link>
+      <Link href="/Authentication/Login">Login</Link>
+      <Link href="/Authentication/SignUp">Sign Up</Link>
+      <Link href= "/Authentication/Welcome">Welcome</Link>
     </View>
   );
 }
