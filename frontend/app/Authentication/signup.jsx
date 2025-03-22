@@ -66,9 +66,10 @@ const SignUp = ({ navigation }) => {
 
       <View style={styles.footerContainer}>
         <Text style={styles.footerText}>Already have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <Link href="/Authentication/Login">Login</Link>
+        {/* <TouchableOpacity onPress={() => navigation.navigate('Login')}>
           <Text style={styles.loginLink}>Login</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </View>
   );
