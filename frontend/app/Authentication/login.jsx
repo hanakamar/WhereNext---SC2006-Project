@@ -20,7 +20,7 @@ const Login = ({ navigation }) => {
 
   const handleLogin = () => {
     console.log('Logging in with:', email, password);
-    // Add backend stuff here to help login 
+    {/* Add backend stuff here to help login */}
   };
 
   return (
@@ -46,8 +46,10 @@ const Login = ({ navigation }) => {
 
         <TouchableOpacity style={styles.forgotPassword}>
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          
         </TouchableOpacity>
-
+        {/*need to add the jwt logic here to resend email and verify again i think we can just take it to that page?? */}
+        
         <CustomButton title="Login" onPress={handleLogin} />
       </View>
 

@@ -22,11 +22,11 @@ const SignUp = ({ navigation }) => {
 
   const handleSignUp = () => {
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      alert('Passwords do not match. Please try again.');
       return;
     }
     console.log('Signing up with:', { name, email, password });
-    // Add authentication logic here
+    {/* Add backend authentication logic here */}
   };
 
   return (
