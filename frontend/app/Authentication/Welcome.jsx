@@ -3,36 +3,52 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import CustomInput from '../styles/CustomInput';
 import CustomButton from '../styles/CustomButton';
 import { commonStyles } from '../styles/commonStyleSheet';
+import { Link, useRouter } from 'expo-router';
 
-const Welcome = ({ navigation }) => {
+const Welcome = () => {
+  const router = useRouter();
   return (
+    
     <View style={[commonStyles.container, styles.welcomeContainer]}>
+      <TouchableOpacity 
+        style={styles.skipButton}
+        onPress={() => router.push('/Home')}
+      >
+        <Text style={styles.skipText}>Skip for now</Text>
+      </TouchableOpacity>
+
       <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>WhereNext</Text>
+        <Text style={styles.logoText}>WhereNext?</Text>
         <Text style={styles.tagline}>Plan and visualize your day</Text>
+        {/*
+        <Text style = {[styles.tagline, {padding : 10} ]}>Login or signup now </Text>
+        */}
       </View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
           style={[commonStyles.button, styles.button]} 
-          onPress={() => navigation.navigate('Login')}
+          onPress={() => router.push('/Authentication/Login')}
+          
         >
           <Text style={commonStyles.buttonText}>Login</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
           style={[commonStyles.button, styles.button, styles.signUpButton]} 
-          onPress={() => navigation.navigate('SignUp')}
+          onPress={() => router.push('/Authentication/SignUp')}
         >
           <Text style={[commonStyles.buttonText, styles.signUpText]}>Sign Up</Text>
         </TouchableOpacity>
 
+        {/*}
         <TouchableOpacity 
           style={styles.skipButton}
-          onPress={() => navigation.navigate('Home')}
+          onPress={() =>router.push('Home')}
         >
           <Text style={styles.skipText}>Skip for now</Text>
         </TouchableOpacity>
+        */}
       </View>
     </View>
   );
@@ -41,12 +57,15 @@ const Welcome = ({ navigation }) => {
 const styles = StyleSheet.create({
   welcomeContainer: {
     padding: 20,
-    justifyContent: 'space-between',
+    flex : 1,
+    justifyContent : 'center',
   },
   logoContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    //flex: 1,
+    //justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 90, 
+   
   },
   logoText: {
     fontSize: 48,
@@ -60,8 +79,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   buttonContainer: {
-    width: '100%',
-    marginBottom: 40,
+    width: '50%',
+    maxWidth: 350,
+    marginBottom: 10,
+    marginTop: 20,
+    
   },
   button: {
     marginBottom: 15,
@@ -76,11 +98,16 @@ const styles = StyleSheet.create({
   },
   skipButton: {
     padding: 10,
-    alignItems: 'center',
+    alignItems: 'right',
+    position : 'absolute',
+    top : 20,
+    right : 20,
   },
   skipText: {
     color: '#666',
     fontSize: 16,
+    padding : 10,
+    textDecorationLine: 'underline',
   },
 });
 

@@ -33,4 +33,11 @@ export const commonStyles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
+  
+  formContainer: {
+    width: '100%',
+    marginBottom: 20,
+    maxWidth: 400,
+    alignSelf : 'center',
+  },
 });

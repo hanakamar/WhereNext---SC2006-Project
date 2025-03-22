@@ -13,6 +13,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import CustomInput from '../styles/CustomInput';
 import CustomButton from '../styles/CustomButton';
 import { commonStyles } from '../styles/commonStyleSheet';
+import { Link } from 'expo-router';
+
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -45,8 +47,8 @@ const Login = ({ navigation }) => {
         />
 
         <TouchableOpacity style={styles.forgotPassword}>
-          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-          
+          {/*<Text style={styles.forgotPasswordText}>Forgot Password?</Text> */}
+          <Link href="/Authentication/ForgotPassword" style={styles.forgotPasswordText}>Forgot Password?</Link>
         </TouchableOpacity>
         {/*need to add the jwt logic here to resend email and verify again i think we can just take it to that page?? */}
         
@@ -55,7 +57,7 @@ const Login = ({ navigation }) => {
 
       <View style={styles.footerContainer}>
         <Text style={styles.footerText}>Don't have an account? </Text>
-        <Link href="/Authentication/SignUp">Sign Up</Link>
+        <Link href="/Authentication/SignUp" style={styles.signUpLink}>Sign Up</Link>
         {/*<TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
           <Text style={styles.signUpLink}>Sign Up</Text>
         </TouchableOpacity> */}
@@ -74,16 +76,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#007BFF',
     marginBottom: 8,
+
   },
   subtitle: {
     fontSize: 16,
     color: '#666',
+    alignSelf: 'center',
+
   },
   formContainer: {
     width: '100%',
     marginBottom: 20,
+    maxWidth: 400,
   },
   forgotPassword: {
     alignSelf: 'flex-end',
@@ -106,6 +112,7 @@ const styles = StyleSheet.create({
     color: '#007BFF',
     fontSize: 14,
     fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
 });
 

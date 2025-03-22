@@ -13,6 +13,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import CustomInput from '../styles/CustomInput';
 import CustomButton from '../styles/CustomButton';
 import { commonStyles } from '../styles/commonStyleSheet';
+import { Link } from 'expo-router';
 
 const SignUp = ({ navigation }) => {
   const [name, setName] = useState('');
@@ -66,7 +67,7 @@ const SignUp = ({ navigation }) => {
 
       <View style={styles.footerContainer}>
         <Text style={styles.footerText}>Already have an account? </Text>
-        <Link href="/Authentication/Login">Login</Link>
+        <Link href="/Authentication/Login" style={styles.loginLink}>Login</Link>
         {/* <TouchableOpacity onPress={() => navigation.navigate('Login')}>
           <Text style={styles.loginLink}>Login</Text>
         </TouchableOpacity> */}
@@ -78,14 +79,17 @@ const SignUp = ({ navigation }) => {
 const styles = StyleSheet.create({
   signUpContainer: {
     padding: 20,
+    flex:1,
+    justifyContent: 'center',
   },
   headerContainer: {
-    marginBottom: 40,
+    marginBottom: 30,
+    alignItems: 'center',
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#007BFF',
     marginBottom: 8,
   },
   subtitle: {
@@ -95,6 +99,8 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
     marginBottom: 20,
+    maxWidth: 400,
+    alignSelf : 'center',
   },
   footerContainer: {
     flexDirection: 'row',
@@ -109,6 +115,7 @@ const styles = StyleSheet.create({
     color: '#007BFF',
     fontSize: 14,
     fontWeight: 'bold',
+    textDecorationLine: 'underline',
   },
 });
 
