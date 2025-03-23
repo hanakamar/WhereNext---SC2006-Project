@@ -27,7 +27,7 @@ const Welcome = () => {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[commonStyles.button, styles.button]}
-          onPress={() => router.push("./login")}
+          onPress={() => router.push("./Login")}
         >
           <Text style={commonStyles.buttonText}>Login</Text>
         </TouchableOpacity>
