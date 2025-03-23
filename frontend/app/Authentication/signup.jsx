@@ -32,8 +32,8 @@ const SignUp = ({ navigation }) => {
     }
 
     // appropriate email id verification 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email.endsWith('@gmail.com')) {
       setMessage('Please enter a valid email address.');
       setMessageType('error');
       return;
