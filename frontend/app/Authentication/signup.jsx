@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
+import BackButton from '../components/BackButton';
 import { commonStyles } from '../styles/commonStyleSheet';
 import { Link } from 'expo-router';
 
@@ -64,13 +65,14 @@ const SignUp = ({ navigation }) => {
     
 
     console.log('Signing up with:', { name, email, password });
-    {/* Add backend authentication logic here; i think we can use this in other sections too */}
+    {/* Add backend authentication logic here; i think we can use this in other sections too fernando*/}
     
 
   };
 
   return (
     <View style={[commonStyles.container, styles.signUpContainer]}>
+      <BackButton />
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Create Account</Text>
         <Text style={styles.subtitle}>Join WhereNext today</Text>

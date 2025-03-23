@@ -20,8 +20,9 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   text: {
-    color: '#007BFF',
+    color: '#666', // rfor blue -> 007BFF
     fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });
 

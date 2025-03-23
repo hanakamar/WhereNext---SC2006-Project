@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
+import BackButton from '../components/BackButton';
 import { commonStyles } from '../styles/commonStyleSheet';
 import { Link, useRouter } from 'expo-router';
 
@@ -20,7 +21,7 @@ const ForgotPassword = () => {
       return;
     }
     else if (!email.endsWith('@gmail.com')) {
-      setMessage('Email is not registered');
+      setMessage('Email is not registered/ invalid email');
       setMessageType('error');
       return;
     }
@@ -36,6 +37,7 @@ const ForgotPassword = () => {
 
   return (
     <View style={[commonStyles.container, styles.container]}>
+      <BackButton />
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Forgot Password?</Text>
         <Text style={styles.subtitle}>Enter your email to reset your password</Text>

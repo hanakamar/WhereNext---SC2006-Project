@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
+import BackButton from '../components/BackButton';
 import { commonStyles } from '../styles/commonStyleSheet';
 import { useRouter } from 'expo-router';
 
@@ -29,6 +30,7 @@ const VerifyEmail = () => {
 
   return (
     <View style={[commonStyles.container, styles.container]}>
+      <BackButton />
       <Text style={styles.title}>Verify Email</Text>
       <Text style={styles.subtitle}>Enter the 6-digit code sent to your email</Text>
 
