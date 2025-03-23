@@ -30,6 +30,14 @@ const SignUp = ({ navigation }) => {
       return;
     }
 
+    // appropriate email id verification 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setMessage('Please enter a valid email address.');
+      setMessageType('error');
+      return;
+    }
+  
     if (password !== confirmPassword) {
       setMessage('Passwords do not match.');
       setMessageType('error');
@@ -56,7 +64,7 @@ const SignUp = ({ navigation }) => {
     
 
     console.log('Signing up with:', { name, email, password });
-    {/* Add backend authentication logic here */}
+    {/* Add backend authentication logic here; i think we can use this in other sections too */}
     
 
   };
