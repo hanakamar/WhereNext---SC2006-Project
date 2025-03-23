@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import CustomInput from '../styles/CustomInput';
-import CustomButton from '../styles/CustomButton';
+import CustomInput from '../components/CustomInput';
+import CustomButton from '../components/CustomButton';
 import { commonStyles } from '../styles/commonStyleSheet';
 import { useRouter } from 'expo-router';
 

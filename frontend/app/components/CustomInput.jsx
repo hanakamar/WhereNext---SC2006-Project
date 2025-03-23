@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextInput } from 'react-native';
-import { commonStyles } from './commonStyleSheet';
+import { commonStyles } from '../styles/commonStyleSheet';
 
 const CustomInput = ({ placeholder, value, setValue, secureTextEntry, keyboardType }) => {
   return (
