@@ -1,109 +1,127 @@
-
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert } from 'react-native';
-import { TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import CustomInput from '../styles/CustomInput';
+import CustomButton from '../styles/CustomButton';
 import { commonStyles } from '../styles/commonStyleSheet';
 import { useRouter } from 'expo-router';
 
 const ResetPassword = () => {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState(null);
   const router = useRouter();
 
   const handleReset = () => {
     if (!newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in both password fields.');
+      setMessage('Both password fields are required.');
+      setMessageType('error');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match.');
+      setMessage('Passwords do not match.');
+      setMessageType('error');
       return;
     }
 
-    const validations = [
-      {
-        test: newPassword.length >= 10,
-        message: 'Password must be at least 10 characters long.',
-      },
-      {
-        test: /[a-z]/.test(newPassword),
-        message: 'Include at least one lowercase letter.',
-      },
-      {
-        test: /[A-Z]/.test(newPassword),
-        message: 'Include at least one uppercase letter.',
-      },
-      {
-        test: /\d/.test(newPassword),
-        message: 'Include at least one number.',
-      },
-      {
-        test: /[!@#$%^&*(),.?":{}|<>]/.test(newPassword),
-        message: 'Include at least one special character.',
-      },
-    ];
+    // Password strength check
+    let strength = 0;
+    if (newPassword.length >= 10) strength++;
+    if (/[a-z]/.test(newPassword)) strength++;
+    if (/[A-Z]/.test(newPassword)) strength++;
+    if (/\d/.test(newPassword)) strength++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) strength++;
 
-    const failed = validations.filter(rule => !rule.test).map(rule => rule.message);
-
-    if (failed.length > 0) {
-      Alert.alert('Weak Password', failed.join('\n'));
+    if (strength < 5) {
+      setMessage('Password too weak. Use 10+ chars with upper, lower, number, and symbol.');
+      setMessageType('error');
       return;
     }
 
-    Alert.alert('Success', 'Your password has been reset!');
-    router.push('/Authentication/Login');
+    setMessage('Password updated successfully!');
+    setMessageType('success');
+
+    setTimeout(() => {
+      router.push('/Authentication/Login');
+    }, 1000);
   };
 
   return (
     <View style={[commonStyles.container, styles.container]}>
       <Text style={styles.title}>Reset Password</Text>
-      <Text style={styles.subtitle}>Enter your new secure password</Text>
+      <Text style={styles.subtitle}>Enter your new password</Text>
 
-      <TextInput
-        placeholder="New Password"
-        value={newPassword}
-        onChangeText={setNewPassword}
-        secureTextEntry
-        style={styles.input}
-      />
+      <View style={styles.form}>
+        <CustomInput
+          placeholder="New Password"
+          value={newPassword}
+          setValue={setNewPassword}
+          secureTextEntry
+        />
+        <CustomInput
+          placeholder="Confirm New Password"
+          value={confirmPassword}
+          setValue={setConfirmPassword}
+          secureTextEntry
+        />
+        <CustomButton title="Update Password" onPress={handleReset} />
+      </View>
 
-      <TextInput
-        placeholder="Confirm New Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-        style={styles.input}
-      />
-
-      <TouchableOpacity style={styles.button} onPress={handleReset}>
-        <Text style={styles.buttonText}>Update Password</Text>
-      </TouchableOpacity>
+      {message !== '' && (
+        <View style={[styles.messageBox, messageType === 'error' ? styles.error : styles.success]}>
+          <Text style={styles.messageText}>{message}</Text>
+        </View>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 20, flex: 1, justifyContent: 'center' },
-  title: { fontSize: 32, fontWeight: 'bold', color: '#007BFF', textAlign: 'center' },
-  subtitle: { fontSize: 16, color: '#666', textAlign: 'center', marginBottom: 20 },
-  input: {
-    backgroundColor: '#f0f0f0',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-  button: {
-    backgroundColor: '#007BFF',
-    padding: 15,
-    borderRadius: 10,
+  container: {
+    padding: 20,
+    flex: 1,
+    justifyContent: 'center',
+    backgroundColor: '#fff',
     alignItems: 'center',
   },
-  buttonText: {
-    color: '#fff',
+  title: {
+    fontSize: 32,
     fontWeight: 'bold',
+    color: '#007BFF',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
     fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  form: {
+    width: '100%',
+    maxWidth: 400,
+  },
+  messageBox: {
+    marginTop: 20,
+    padding: 12,
+    borderRadius: 10,
+    marginHorizontal: 20,
+  },
+  error: {
+    backgroundColor: '#ffe6e6',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff4d4d',
+  },
+  success: {
+    backgroundColor: '#e6f9ec',
+    borderLeftWidth: 4,
+    borderLeftColor: '#28a745',
+  },
+  messageText: {
+    color: '#333',
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 
