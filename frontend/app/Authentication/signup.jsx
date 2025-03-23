@@ -15,7 +15,6 @@ import CustomButton from '../styles/CustomButton';
 import { commonStyles } from '../styles/commonStyleSheet';
 import { Link } from 'expo-router';
 
-
 const SignUp = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
