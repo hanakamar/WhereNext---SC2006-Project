@@ -12,6 +12,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import CustomInput from '../components/CustomInput';
 import CustomButton from '../components/CustomButton';
+import BackButton from '../components/BackButton';
 import { commonStyles } from '../styles/commonStyleSheet';
 import { Link } from 'expo-router';
 
@@ -27,6 +28,7 @@ const Login = ({ navigation }) => {
 
   return (
     <View style={[commonStyles.container, styles.loginContainer]}>
+      <BackButton />
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Welcome Back!</Text>
         <Text style={styles.subtitle}>Sign in to continue</Text>
