@@ -67,4 +67,14 @@ const updatePassword = async (req, res) => {
     }
 };
 
+// // Get All Profile (LoginUser)
+// const getAllProfiles = async (req, res) => {
+//     try {
+//         const profiles = await Profile.find(); // Retrieve all profiles
+//         res.status(200).json(profiles);
+//     } catch (error) {
+//         res.status(500).json({ message: 'Server error' });
+//     }
+// }
+
 module.exports = { signupUser, loginUser, updatePassword };

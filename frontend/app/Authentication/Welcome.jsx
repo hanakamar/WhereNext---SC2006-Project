@@ -1,18 +1,17 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import CustomInput from '../components/CustomInput';
-import CustomButton from '../components/CustomButton';
-import { commonStyles } from '../styles/commonStyleSheet';
-import { Link, useRouter } from 'expo-router';
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import CustomInput from "../components/CustomInput";
+import CustomButton from "../components/CustomButton";
+import { commonStyles } from "../styles/commonStyleSheet";
+import { Link, useRouter } from "expo-router";
 
 const Welcome = () => {
   const router = useRouter();
   return (
-    
     <View style={[commonStyles.container, styles.welcomeContainer]}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.skipButton}
-        onPress={() => router.push('/Home')}
+        onPress={() => router.push("/Home")}
       >
         <Text style={styles.skipText}>Skip for now</Text>
       </TouchableOpacity>
@@ -26,19 +25,20 @@ const Welcome = () => {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity 
-          style={[commonStyles.button, styles.button]} 
-          onPress={() => router.push('/Authentication/Login')}
-          
+        <TouchableOpacity
+          style={[commonStyles.button, styles.button]}
+          onPress={() => router.push("./login")}
         >
           <Text style={commonStyles.buttonText}>Login</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={[commonStyles.button, styles.button, styles.signUpButton]} 
-          onPress={() => router.push('/Authentication/SignUp')}
+        <TouchableOpacity
+          style={[commonStyles.button, styles.button, styles.signUpButton]}
+          onPress={() => router.push("./signup")}
         >
-          <Text style={[commonStyles.buttonText, styles.signUpText]}>Sign Up</Text>
+          <Text style={[commonStyles.buttonText, styles.signUpText]}>
+            Sign Up
+          </Text>
         </TouchableOpacity>
 
         {/*}
@@ -57,57 +57,55 @@ const Welcome = () => {
 const styles = StyleSheet.create({
   welcomeContainer: {
     padding: 20,
-    flex : 1,
-    justifyContent : 'center',
+    flex: 1,
+    justifyContent: "center",
   },
   logoContainer: {
     //flex: 1,
     //justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 90, 
-   
+    alignItems: "center",
+    marginBottom: 90,
   },
   logoText: {
     fontSize: 48,
-    fontWeight: 'bold',
-    color: '#007BFF',
+    fontWeight: "bold",
+    color: "#007BFF",
     marginBottom: 10,
   },
   tagline: {
     fontSize: 18,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
   },
   buttonContainer: {
-    width: '50%',
+    width: "50%",
     maxWidth: 350,
     marginBottom: 10,
     marginTop: 20,
-    
   },
   button: {
     marginBottom: 15,
   },
   signUpButton: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 2,
-    borderColor: '#007BFF',
+    borderColor: "#007BFF",
   },
   signUpText: {
-    color: '#007BFF',
+    color: "#007BFF",
   },
   skipButton: {
     padding: 10,
-    alignItems: 'right',
-    position : 'absolute',
-    top : 20,
-    right : 20,
+    alignItems: "right",
+    position: "absolute",
+    top: 20,
+    right: 20,
   },
   skipText: {
-    color: '#666',
+    color: "#666",
     fontSize: 16,
-    padding : 10,
-    textDecorationLine: 'underline',
+    padding: 10,
+    textDecorationLine: "underline",
   },
 });
 

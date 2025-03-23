@@ -2,7 +2,7 @@ const express = require('express')
 // const { createProfile, getProfiles, getProfileById, deleteProfile, updateProfile, getAllProfiles } = require('../controllers/ProfileController');
 
 // Controller Functions
-const { signupUser, loginUser} = require('../controllers/profileController')
+const { signupUser, loginUser, updatePassword } = require('../controllers/profileController')
 
 const router = express.Router()
 
@@ -14,7 +14,7 @@ const router = express.Router()
 
 // //router.delete('/:id', deleteProfile);   I assumed there is no deletion of accounts.
 
-// router.patch('/:id', updateProfile)     //Edit user profile
+router.patch('/:id', updatePassword)     //Edit user profile
 
 // Login Route
 router.post('/login', loginUser)

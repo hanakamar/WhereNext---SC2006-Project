@@ -4,11 +4,7 @@ import { Link } from "expo-router";
 export default function Index() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Edit app/index.tsx to edit this screen.</Text>
-      <Text>Hello Everyone, this is just a sample page</Text>
-      <Link href="/Authentication/Login">Login</Link>
-      <Link href="/Authentication/SignUp">Sign Up</Link>
-      <Link href= "/Authentication/Welcome">Welcome</Link>
+      <Link href="/Authentication/Welcome">Welcome</Link>
     </View>
   );
 }
