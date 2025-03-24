@@ -11,7 +11,7 @@ const Welcome = () => {
     <View style={[commonStyles.container, styles.welcomeContainer]}>
       <TouchableOpacity
         style={styles.skipButton}
-        onPress={() => router.push("/Home")}
+        onPress={() => router.push("../SavedLocations/Main")}
       >
         <Text style={styles.skipText}>Skip for now</Text>
       </TouchableOpacity>
@@ -34,7 +34,7 @@ const Welcome = () => {
 
         <TouchableOpacity
           style={[commonStyles.button, styles.button, styles.signUpButton]}
-          onPress={() => router.push("./signup")}
+          onPress={() => router.push("./SignUp")}
         >
           <Text style={[commonStyles.buttonText, styles.signUpText]}>
             Sign Up

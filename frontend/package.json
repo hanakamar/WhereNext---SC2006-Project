@@ -17,9 +17,11 @@
   "proxy": "http://localhost:4000",
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
+    "@gorhom/bottom-sheet": "^5.1.2",
     "@react-native-community/geolocation": "^3.4.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
-    "@react-navigation/native": "^7.0.14",
+    "@react-navigation/native": "^7.0.18",
+    "@react-navigation/stack": "^7.2.2",
     "axios": "^1.8.4",
     "cors": "^2.8.5",
     "expo": "~52.0.39",

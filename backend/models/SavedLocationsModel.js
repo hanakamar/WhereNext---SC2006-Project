@@ -3,7 +3,7 @@ const mongoose = require('mongoose')
 const Schema = mongoose.Schema
 
 const SavedLocationsSchema = new Schema({
-    user: {
+    email: {
         type: String,
         required: true
     },

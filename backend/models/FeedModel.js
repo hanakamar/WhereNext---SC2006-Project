@@ -3,12 +3,12 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const feedSchema = new Schema({
-    user: {
+    email: {
         type: String,
         required: false
     },
     title: {
-        type:String,
+        type: String,
         required: true
     },
 
@@ -16,15 +16,15 @@ const feedSchema = new Schema({
         type: String,
         required: true
     },
-    
+
     likes: {
         type: Number,
         default: 0
     },
-    img: { 
+    img: {
         type: String,               //File Path to Images
         required: false
-     }
+    }
 
 }, { timestamps: true });
 
