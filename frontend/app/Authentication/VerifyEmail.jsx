@@ -1,30 +1,45 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import CustomInput from '../components/CustomInput';
-import CustomButton from '../components/CustomButton';
-import BackButton from '../components/BackButton';
-import { commonStyles } from '../styles/commonStyleSheet';
-import { useRouter } from 'expo-router';
+import React, { useState } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import CustomInput from "../components/CustomInput";
+import CustomButton from "../components/CustomButton";
+import BackButton from "../components/BackButton";
+import { commonStyles } from "../styles/commonStyleSheet";
+import { useRouter, useLocalSearchParams } from "expo-router";
 
 const VerifyEmail = () => {
-  const [code, setCode] = useState('');
-  const [message, setMessage] = useState('');
+  const [code, setCode] = useState("");
+  const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(null);
   const router = useRouter();
+  const { from } = useLocalSearchParams();
+
+  const clearMessage = () => {
+    setTimeout(() => {
+      setMessage("");
+      setMessageType(null);
+    }, 3000);
+  };
 
   const handleVerify = () => {
-    if (code.trim() === '') {
-      setMessage('Verification code is required.');
-      setMessageType('error');
-    } else if (code === '123456') {
-      setMessage('Verification successful!');
-      setMessageType('success');
+    if (code.trim() === "") {
+      setMessage("Verification code is required.");
+      setMessageType("error");
+      clearMessage();
+    } else if (code === "123456") {
+      setMessage("Verification successful!");
+      setMessageType("success");
+      clearMessage();
       setTimeout(() => {
-        router.push('/Authentication/ResetPassword');
+        if (from === "SignUp") {
+          router.push("/Authentication/Login");
+        } else if (from === "ForgotPassword") {
+          router.push("/Authentication/ResetPassword");
+        }
       }, 1000);
     } else {
-      setMessage('Incorrect verification code.');
-      setMessageType('error');
+      setMessage("Incorrect verification code.");
+      setMessageType("error");
+      clearMessage();
     }
   };
 
@@ -32,7 +47,9 @@ const VerifyEmail = () => {
     <View style={[commonStyles.container, styles.container]}>
       <BackButton />
       <Text style={styles.title}>Verify Email</Text>
-      <Text style={styles.subtitle}>Enter the 6-digit code sent to your email</Text>
+      <Text style={styles.subtitle}>
+        Enter the 6-digit code sent to your email
+      </Text>
 
       <View style={styles.form}>
         <CustomInput
@@ -43,8 +60,13 @@ const VerifyEmail = () => {
         <CustomButton title="Verify Code" onPress={handleVerify} />
       </View>
 
-      {message !== '' && (
-        <View style={[styles.messageBox, messageType === 'error' ? styles.error : styles.success]}>
+      {message !== "" && (
+        <View
+          style={[
+            styles.messageBox,
+            messageType === "error" ? styles.error : styles.success,
+          ]}
+        >
           <Text style={styles.messageText}>{message}</Text>
         </View>
       )}
@@ -56,25 +78,25 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     flex: 1,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    alignItems: 'center',
+    justifyContent: "center",
+    backgroundColor: "#fff",
+    alignItems: "center",
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#007BFF',
+    fontWeight: "bold",
+    color: "#007BFF",
     marginBottom: 8,
-    textAlign: 'center',
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
+    color: "#666",
+    textAlign: "center",
     marginBottom: 30,
   },
   form: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
   },
   messageBox: {
@@ -84,19 +106,19 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
   },
   error: {
-    backgroundColor: '#ffe6e6',
+    backgroundColor: "#ffe6e6",
     borderLeftWidth: 4,
-    borderLeftColor: '#ff4d4d',
+    borderLeftColor: "#ff4d4d",
   },
   success: {
-    backgroundColor: '#e6f9ec',
+    backgroundColor: "#e6f9ec",
     borderLeftWidth: 4,
-    borderLeftColor: '#28a745',
+    borderLeftColor: "#28a745",
   },
   messageText: {
-    color: '#333',
+    color: "#333",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
 });
 

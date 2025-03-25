@@ -37,6 +37,7 @@ const Login = ({ navigation }) => {
       if (res.data.status === "ok") {
         Alert.alert("Login Successful");
         console.log("Login Successful");
+        router.push("../SavedLocations/Main");
       } else {
         Alert.alert("Login Failed", res.data.message || "Unexpected error");
       }

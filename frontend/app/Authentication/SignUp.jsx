@@ -26,11 +26,18 @@ const SignUp = ({ navigation }) => {
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(null);
   const router = useRouter();
+  const clearMessage = () => {
+    setTimeout(() => {
+      setMessage("");
+      setMessageType(null);
+    }, 3000);
+  };
 
   const handleSignUp = () => {
     if (!name || !email || !password || !confirmPassword) {
       setMessage("All fields are required.");
       setMessageType("error");
+      clearMessage();
       return;
     }
 
@@ -39,12 +46,14 @@ const SignUp = ({ navigation }) => {
     if (!email.endsWith("@gmail.com")) {
       setMessage("Please enter a valid email address.");
       setMessageType("error");
+      clearMessage();
       return;
     }
 
     if (password !== confirmPassword) {
       setMessage("Passwords do not match.");
       setMessageType("error");
+      clearMessage();
       return;
     }
 
@@ -61,6 +70,7 @@ const SignUp = ({ navigation }) => {
         "Password too weak. Use at least 10 characters with uppercase, lowercase, number, and symbol."
       );
       setMessageType("error");
+      clearMessage();
       return;
     }
     const userData = {
@@ -82,7 +92,11 @@ const SignUp = ({ navigation }) => {
             Alert.alert("Success", "Registered Successfully", [
               {
                 text: "OK",
-                onPress: () => router.push("./login"),
+                onPress: () =>
+                  router.push({
+                    pathname: "./VerifyEmail",
+                    params: { from: "SignUp" },
+                  }),
               },
             ]);
           } else {
