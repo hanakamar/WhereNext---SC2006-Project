@@ -1,36 +1,81 @@
-import { StyleSheet, Text, View } from "react-native";
-import { useEffect } from "react";
-import { useRouter } from "expo-router";
+import "react-native-gesture-handler";
+import { useState, useEffect } from "react";
+import React from "react";
+import { createStackNavigator } from "@react-navigation/stack";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
-export default function Index() {
-  const router = useRouter();
+import SplashScreen from "./screens/SplashScreen";
+import Welcome from "./screens/Welcome";
+import MapViewComponent from "./screens/MapViewComponent";
+import FoodList from "./screens/food-list";
+import Events from "./screens/events";
+import UserProfile from "./screens/UserProfile";
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      router.replace("/Authentication/Welcome");
-    }, 1500);
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
-    return () => clearTimeout(timer); // Cleanup in case component unmounts early
-  }, []);
-
+function MyTabs() {
   return (
-    <View style={styles.mainContainer}>
-      <Text style={styles.title}>Welcome</Text>
-    </View>
+    <Tab.Navigator>
+      <Tab.Screen
+        name="Map"
+        component={MapViewComponent}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen
+        name="Food"
+        component={FoodList}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen
+        name="Events"
+        component={Events}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={UserProfile}
+        options={{ headerShown: false }}
+      />
+    </Tab.Navigator>
   );
 }
 
-// Styles
-const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#007BFF",
-    marginBottom: 8,
-  },
-});
+function AppNavigator() {
+  const [isSplashVisible, setIsSplashVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsSplashVisible(false);
+    }, 1500); // 5 sec
+
+    return () => clearTimeout(timer); // Cleanup the timer on component unmount
+  }, []);
+
+  if (isSplashVisible) {
+    return <SplashScreen />;
+  }
+  return (
+    <Stack.Navigator initialRouteName="Welcome">
+      <Stack.Screen
+        name="Welcome"
+        component={Welcome}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Main"
+        component={MyTabs}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+export default function Index() {
+  return (
+    <SafeAreaProvider>
+      <AppNavigator />
+    </SafeAreaProvider>
+  );
+}

@@ -5,14 +5,14 @@ import CustomButton from "../components/CustomButton";
 import { commonStyles } from "../styles/commonStyleSheet";
 import { Link, useRouter } from "expo-router";
 
-const Welcome = () => {
+export default function Welcome({ navigation }) {
+  const handleNavigate = () => {
+    navigation.replace("Main"); // Navigate to the main app
+  };
   const router = useRouter();
   return (
     <View style={[commonStyles.container, styles.welcomeContainer]}>
-      <TouchableOpacity
-        style={styles.skipButton}
-        onPress={() => router.push("../SavedLocations/Main")}
-      >
+      <TouchableOpacity style={styles.skipButton} onPress={handleNavigate}>
         <Text style={styles.skipText}>Skip for now</Text>
       </TouchableOpacity>
 
@@ -52,7 +52,7 @@ const Welcome = () => {
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   welcomeContainer: {
@@ -108,5 +108,3 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
 });
-
-export default Welcome;
