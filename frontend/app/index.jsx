@@ -8,7 +8,7 @@ import Icon from "react-native-vector-icons/Ionicons"; // Import the icon librar
 
 import SplashScreen from "./screens/SplashScreen";
 import Welcome from "./screens/Welcome";
-import MapViewComponent from "./screens/MapViewComponent";
+import Map from "./screens/Map";
 import FoodList from "./screens/food-list";
 import Events from "./screens/events";
 import UserProfile from "./screens/UserProfile";
@@ -40,7 +40,7 @@ function MyTabs() {
     >
       <Tab.Screen
         name="Map"
-        component={MapViewComponent}
+        component={Map}
         options={{ headerShown: false }}
       />
       <Tab.Screen
