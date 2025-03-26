@@ -55,7 +55,7 @@ export default function UserProfile({ navigation }) {
         style={styles.locationItem}
         onPress={() =>
           router.push({
-            pathname: "./EditLocation",
+            pathname: "../SavedLocations/EditLocation",
             params: item,
           })
         }

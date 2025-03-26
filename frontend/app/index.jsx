@@ -4,6 +4,7 @@ import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import Icon from "react-native-vector-icons/Ionicons"; // Import the icon library
 
 import SplashScreen from "./screens/SplashScreen";
 import Welcome from "./screens/Welcome";
@@ -17,7 +18,26 @@ const Tab = createBottomTabNavigator();
 
 function MyTabs() {
   return (
-    <Tab.Navigator>
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ color, size }) => {
+          let iconName;
+
+          if (route.name === "Map") {
+            iconName = "map";
+          } else if (route.name === "Food") {
+            iconName = "restaurant";
+          } else if (route.name === "Events") {
+            iconName = "calendar";
+          } else if (route.name === "Profile") {
+            iconName = "person";
+          }
+
+          // Return the icon component
+          return <Icon name={iconName} size={size} color={color} />;
+        },
+      })}
+    >
       <Tab.Screen
         name="Map"
         component={MapViewComponent}
