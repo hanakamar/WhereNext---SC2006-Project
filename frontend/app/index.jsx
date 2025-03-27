@@ -12,6 +12,7 @@ import MApp from "./screens/Map2";
 import FoodList from "./screens/food-list";
 import Events from "./screens/events";
 import UserProfile from "./screens/UserProfile";
+import Planner from "./screens/planner";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -31,6 +32,8 @@ function MyTabs() {
             iconName = "calendar";
           } else if (route.name === "Profile") {
             iconName = "person";
+          }else if (route.name === "Planner") {
+            iconName = "planner";
           }
 
           // Return the icon component
@@ -56,6 +59,11 @@ function MyTabs() {
       <Tab.Screen
         name="Profile"
         component={UserProfile}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen
+        name="Planner"
+        component={Planner}
         options={{ headerShown: false }}
       />
     </Tab.Navigator>
