@@ -19,8 +19,10 @@ const { width } = Dimensions.get('window');
 
 export default function MApp() {
   const [location, setLocation] = useState(null);
+  const [region, setRegion] = useState(null);
   const [foodPlaces, setFoodPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [savedPlaces, setSavedPlaces] = useState([]);
   const mapRef = useRef(null);
 
   useEffect(() => {
@@ -33,33 +35,67 @@ export default function MApp() {
 
       let loc = await Location.getCurrentPositionAsync({});
       setLocation(loc.coords);
-      console.log("📍 User location:", loc.coords);
-
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/planner`, {
-          params: {
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude,
-          },
-        });
-
-        console.log("📦 Backend response:", response.data);
-        setFoodPlaces(response.data.foodPlaces);
-      } catch (error) {
-        console.error("❌ Error fetching data:", error);
-        Alert.alert('Error', 'Failed to fetch places.');
-      } finally {
-        setLoading(false);
-      }
+      setRegion({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude,
+        latitudeDelta: 0.05,
+        longitudeDelta: 0.05,
+      });
     })();
   }, []);
 
-  const savePlace = (place) => {
-    console.log("💾 Saving place:", place);
-    // TODO: POST to MongoDB user data
+  useEffect(() => {
+    if (!region) return;
+
+    const bounds = {
+      north: region.latitude + region.latitudeDelta / 2,
+      south: region.latitude - region.latitudeDelta / 2,
+      east: region.longitude + region.longitudeDelta / 2,
+      west: region.longitude - region.longitudeDelta / 2,
+    };
+
+    const fetchFoodPlaces = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/planner`, {
+          params: {
+            latitude: region.latitude,
+            longitude: region.longitude,
+            bounds: JSON.stringify(bounds),
+          },
+        });
+        setFoodPlaces(response.data.foodPlaces);
+        setLoading(false);
+      } catch (error) {
+        console.error('❌ Error fetching data:', error);
+        Alert.alert('Error', 'Failed to fetch places.');
+        setLoading(false);
+      }
+    };
+
+    fetchFoodPlaces();
+  }, [region]);
+
+  const centerMapOnPlace = (lat, lng) => {
+    if (mapRef.current) {
+      mapRef.current.animateToRegion({
+        latitude: parseFloat(lat),
+        longitude: parseFloat(lng),
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      }, 1000);
+    }
   };
 
-  if (loading || !location) {
+  const savePlace = async (place) => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/save`, place);
+      setSavedPlaces(prev => [...prev, place.id]);
+    } catch (err) {
+      console.error('❌ Failed to save place:', err);
+    }
+  };
+
+  if (loading || !location || !region) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" />
@@ -73,12 +109,8 @@ export default function MApp() {
       <MapView
         ref={mapRef}
         style={styles.map}
-        initialRegion={{
-          latitude: location.latitude,
-          longitude: location.longitude,
-          latitudeDelta: 0.05,
-          longitudeDelta: 0.05,
-        }}
+        initialRegion={region}
+        onRegionChangeComplete={setRegion}
         showsUserLocation
       >
         {Array.isArray(foodPlaces) && foodPlaces.map(place => (
@@ -100,15 +132,9 @@ export default function MApp() {
           {foodPlaces.map(place => (
             <TouchableOpacity
               key={place.id}
-              onPress={() => {
-                mapRef.current?.animateToRegion({
-                  latitude: parseFloat(place.lat),
-                  longitude: parseFloat(place.lng),
-                  latitudeDelta: 0.01,
-                  longitudeDelta: 0.01,
-                }, 1000);
-              }}
+              onPress={() => centerMapOnPlace(place.lat, place.lng)}
               style={styles.card}
+              activeOpacity={0.9}
             >
               {place.photoUrl ? (
                 <Image source={{ uri: place.photoUrl }} style={styles.image} />
@@ -120,10 +146,12 @@ export default function MApp() {
               <Text style={styles.name}>{place.name}</Text>
               <Text style={styles.address}>{place.address}</Text>
               <TouchableOpacity
-                onPress={() => savePlace(place)}
                 style={styles.saveButton}
+                onPress={() => savePlace(place)}
               >
-                <Text style={styles.saveButtonText}>Save</Text>
+                <Text style={styles.saveButtonText}>
+                  {savedPlaces.includes(place.id) ? 'Saved' : 'Save'}
+                </Text>
               </TouchableOpacity>
             </TouchableOpacity>
           ))}
@@ -183,17 +211,17 @@ const styles = StyleSheet.create({
   address: {
     color: '#666',
     fontSize: 13,
+    marginBottom: 4,
   },
   saveButton: {
-    marginTop: 6,
-    backgroundColor: '#ffa500',
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
+    marginTop: 4,
+    paddingVertical: 6,
+    backgroundColor: '#4caf50',
+    borderRadius: 8,
+    alignItems: 'center',
   },
   saveButtonText: {
-    color: '#fff',
+    color: 'white',
     fontWeight: 'bold',
   },
 });
