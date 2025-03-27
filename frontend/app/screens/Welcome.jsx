@@ -7,7 +7,7 @@ import { Link, useRouter } from "expo-router";
 
 export default function Welcome({ navigation }) {
   const handleNavigate = () => {
-    navigation.replace("Main"); // Navigate to the main app
+    navigation.navigate("Main"); // Navigate to the main app
   };
   const router = useRouter();
   return (
