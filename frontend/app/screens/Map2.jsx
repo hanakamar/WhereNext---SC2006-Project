@@ -16,6 +16,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '@env';
 
 const { width } = Dimensions.get('window');
+const CARD_WIDTH = width * 0.7 + 16; // card width + horizontal margin
 
 export default function MApp() {
   const [location, setLocation] = useState(null);
@@ -23,7 +24,10 @@ export default function MApp() {
   const [foodPlaces, setFoodPlaces] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savedPlaces, setSavedPlaces] = useState([]);
+  const [showPlaceList, setShowPlaceList] = useState(true);
+  const [selectedPlaceId, setSelectedPlaceId] = useState(null);
   const mapRef = useRef(null);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -86,6 +90,14 @@ export default function MApp() {
     }
   };
 
+  const handleMarkerPress = (placeId) => {
+    setSelectedPlaceId(placeId);
+    const index = foodPlaces.findIndex(p => p.id === placeId);
+    if (scrollRef.current && index !== -1) {
+      scrollRef.current.scrollTo({ x: index * CARD_WIDTH, animated: true });
+    }
+  };
+
   const savePlace = async (place) => {
     try {
       await axios.post(`${API_BASE_URL}/api/save`, place);
@@ -123,40 +135,59 @@ export default function MApp() {
             title={place.name}
             description={place.address}
             pinColor="orange"
+            onPress={() => handleMarkerPress(place.id)}
           />
         ))}
       </MapView>
 
-      <View style={styles.placeListContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {foodPlaces.map(place => (
-            <TouchableOpacity
-              key={place.id}
-              onPress={() => centerMapOnPlace(place.lat, place.lng)}
-              style={styles.card}
-              activeOpacity={0.9}
-            >
-              {place.photoUrl ? (
-                <Image source={{ uri: place.photoUrl }} style={styles.image} />
-              ) : (
-                <View style={[styles.image, styles.imagePlaceholder]}>
-                  <Text style={styles.imagePlaceholderText}>No Image</Text>
-                </View>
-              )}
-              <Text style={styles.name}>{place.name}</Text>
-              <Text style={styles.address}>{place.address}</Text>
+      <TouchableOpacity
+        style={[styles.toggleButton, { bottom: showPlaceList ? 290 : 20 }]}
+        onPress={() => setShowPlaceList(!showPlaceList)}
+      >
+        <Text style={styles.toggleButtonText}>
+          {showPlaceList ? '↓' : '↑'}
+        </Text>
+      </TouchableOpacity>
+
+      {showPlaceList && (
+        <View style={styles.placeListContainer}>
+          <ScrollView
+            ref={scrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+          >
+            {foodPlaces.map(place => (
               <TouchableOpacity
-                style={styles.saveButton}
-                onPress={() => savePlace(place)}
+                key={place.id}
+                onPress={() => centerMapOnPlace(place.lat, place.lng)}
+                style={[
+                  styles.card,
+                  selectedPlaceId === place.id && styles.selectedCard,
+                ]}
+                activeOpacity={0.9}
               >
-                <Text style={styles.saveButtonText}>
-                  {savedPlaces.includes(place.id) ? 'Saved' : 'Save'}
-                </Text>
+                {place.photoUrl ? (
+                  <Image source={{ uri: place.photoUrl }} style={styles.image} />
+                ) : (
+                  <View style={[styles.image, styles.imagePlaceholder]}>
+                    <Text style={styles.imagePlaceholderText}>No Image</Text>
+                  </View>
+                )}
+                <Text style={styles.name}>{place.name}</Text>
+                <Text style={styles.address}>{place.address}</Text>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={() => savePlace(place)}
+                >
+                  <Text style={styles.saveButtonText}>
+                    {savedPlaces.includes(place.id) ? 'Saved' : 'Save'}
+                  </Text>
+                </TouchableOpacity>
               </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
     </View>
   );
 }
@@ -174,6 +205,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  toggleButton: {
+    position: 'absolute',
+    alignSelf: 'center',
+    backgroundColor: 'white',
+    padding: 8,
+    borderRadius: 20,
+    elevation: 5,
+    zIndex: 10,
+    bottom: 220,
+  },
+  toggleButtonText: {
+    fontSize: 24,
+    color: '#333',
+  },
   placeListContainer: {
     position: 'absolute',
     bottom: 10,
@@ -189,6 +234,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
+  },
+  selectedCard: {
+    borderWidth: 2,
+    borderColor: '#ff9800',
   },
   image: {
     height: 100,
