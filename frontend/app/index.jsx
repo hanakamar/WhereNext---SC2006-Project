@@ -9,7 +9,7 @@ import Icon from "react-native-vector-icons/Ionicons"; // Import the icon librar
 import SplashScreen from "./screens/SplashScreen";
 import Welcome from "./screens/Welcome";
 import MApp from "./screens/Map2";
-import FoodList from "./screens/food-list";
+import Catalogue from "./screens/catalogue";
 import Events from "./screens/events";
 import UserProfile from "./screens/UserProfile";
 
@@ -45,7 +45,7 @@ function MyTabs() {
       />
       <Tab.Screen
         name="Food"
-        component={FoodList}
+        component={Catalogue}
         options={{ headerShown: false }}
       />
       <Tab.Screen
