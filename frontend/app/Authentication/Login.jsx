@@ -32,6 +32,10 @@ const Login = ({ navigation }) => {
       password: password,
     };
 
+    const handleNavigate = () => {
+      navigation.navigate("Main"); // Navigate to the main app
+    };
+
     /* Add backend stuff here to help login */
     try {
       const res = await axios.post(
@@ -41,7 +45,7 @@ const Login = ({ navigation }) => {
       if (res.data.status === "ok") {
         Alert.alert("Login Successful");
         console.log("Login Successful");
-        router.push("../SavedLocations/Main");
+        navigation.navigate("Main"); // Navigate to the main app
       } else {
         Alert.alert("Login Failed", res.data.message || "Unexpected error");
       }

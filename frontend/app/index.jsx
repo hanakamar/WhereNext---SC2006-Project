@@ -12,6 +12,7 @@ import MApp from "./screens/Map2";
 import Catalogue from "./screens/catalogue";
 import Events from "./screens/events";
 import UserProfile from "./screens/UserProfile";
+import Login from "./Authentication/Login";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -81,6 +82,11 @@ function AppNavigator() {
       <Stack.Screen
         name="Welcome"
         component={Welcome}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Login"
+        component={Login}
         options={{ headerShown: false }}
       />
       <Stack.Screen

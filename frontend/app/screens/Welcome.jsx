@@ -27,7 +27,7 @@ export default function Welcome({ navigation }) {
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[commonStyles.button, styles.button]}
-          onPress={() => router.push("../Authentication/Login")}
+          onPress={() => navigation.navigate("Login")}
         >
           <Text style={commonStyles.buttonText}>Login</Text>
         </TouchableOpacity>
