@@ -25,6 +25,7 @@ const Login = ({ navigation }) => {
 
   async function handleLogin() {
     console.log("Logging in with:", email);
+    console.log(`${config.API_URL}/api/profile/login`);
 
     const userData = {
       email: email,
@@ -33,7 +34,10 @@ const Login = ({ navigation }) => {
 
     /* Add backend stuff here to help login */
     try {
-      const res = await axios.post(`${config.API_URL}/profile/login`, userData);
+      const res = await axios.post(
+        `${config.API_URL}/api/profile/login`,
+        userData
+      );
       if (res.data.status === "ok") {
         Alert.alert("Login Successful");
         console.log("Login Successful");
