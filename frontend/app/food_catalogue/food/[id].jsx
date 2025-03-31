@@ -1,7 +1,7 @@
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 
-export default function EventDetail() {
+export default function FoodDetail() {
   const params = useLocalSearchParams();
   
   return (
@@ -9,8 +9,7 @@ export default function EventDetail() {
       <Image source={{ uri: params.image }} style={styles.image} />
       <View style={styles.content}>
         <Text style={styles.title}>{params.name}</Text>
-        <Text style={styles.date}>📅 {params.date}</Text>
-        <Text style={styles.location}>📍 {params.location}</Text>
+        <Text style={styles.address}>📍 {params.address}</Text>
         
         <View style={styles.detailsContainer}>
           <View style={styles.detailItem}>
@@ -52,12 +51,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 5,
   },
-  date: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 5,
-  },
-  location: {
+  address: {
     fontSize: 16,
     color: '#666',
     marginBottom: 20,
