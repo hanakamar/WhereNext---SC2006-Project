@@ -11,20 +11,15 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function EditLocation() {
+export default function SaveLocation() {
   const router = useRouter();
-  const { name, location, description, email, image, date, time } =
-    useLocalSearchParams();
+  const { name, location, description, email, image } = useLocalSearchParams();
 
   const [eventName] = useState(name);
   const [loc] = useState(location);
   const [desc] = useState(description);
-  const [locDate, setDate] = useState(date ? new Date(date) : null);
-  const [locTime, setTime] = useState(
-    time ? new Date(`1970-01-01T${time}:00+07:30`) : null
-  );
-  const [imageUri] = useState(image);
-
+  const [locDate, setDate] = useState(null);
+  const [locTime, setTime] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
 
@@ -51,8 +46,8 @@ export default function EditLocation() {
 
   return (
     <View style={styles.container}>
-      {image && <Image source={imageUri} style={styles.image} />}
-      <Text style={styles.title}>Edit Location</Text>
+      {image && <Image source={{ uri: image }} style={styles.image} />}
+      <Text style={styles.title}>Save Location</Text>
       <View style={styles.infoContainer}>
         <Text style={styles.label}>Event Name</Text>
         <Text style={styles.value}>{eventName}</Text>

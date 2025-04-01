@@ -28,6 +28,7 @@ export default function UserProfile({ navigation }) {
           description: "Western Cuisine",
           date: "2021-10-10",
           time: "12:00",
+          image: require("../../assets/images/resto.png"),
         },
         {
           email: "test2@gmail.com",
@@ -35,6 +36,7 @@ export default function UserProfile({ navigation }) {
           description: "Eastern Cuisine",
           date: "2021-11-11",
           time: "18:00",
+          image: require("../../assets/images/resto.png"),
         },
       ];
       setSavedLocations(fetchedLocations);
@@ -60,10 +62,7 @@ export default function UserProfile({ navigation }) {
           })
         }
       >
-        <Image
-          source={require("../../assets/images/resto.png")}
-          style={styles.imageBox}
-        />
+        <Image source={item.image} style={styles.imageBox} />
         <View style={styles.locationDetails}>
           <Text style={styles.locationName}> {item.locationName} </Text>
           <Text style={styles.text}> Description: {item.description} </Text>
