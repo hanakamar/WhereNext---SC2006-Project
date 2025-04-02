@@ -10,9 +10,11 @@ import SplashScreen from "./screens/SplashScreen";
 import Welcome from "./screens/Welcome";
 import MApp from "./screens/Map2";
 import Catalogue from "./screens/catalogue";
-import Events from "./screens/events";
 import UserProfile from "./screens/UserProfile";
 import Login from "./Authentication/Login";
+import SaveLocation from "./SavedLocations/SaveLocation";
+import ViewLocation from "./SavedLocations/ViewLocation";
+import EditLocation from "./SavedLocations/EditLocation";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -26,10 +28,8 @@ function MyTabs() {
 
           if (route.name === "Map") {
             iconName = "map";
-          } else if (route.name === "Food") {
-            iconName = "restaurant";
-          } else if (route.name === "Events") {
-            iconName = "calendar";
+          } else if (route.name === "Food & Events") {
+            iconName = "storefront";
           } else if (route.name === "Profile") {
             iconName = "person";
           }
@@ -45,13 +45,8 @@ function MyTabs() {
         options={{ headerShown: false }}
       />
       <Tab.Screen
-        name="Food"
+        name="Food & Events"
         component={Catalogue}
-        options={{ headerShown: false }}
-      />
-      <Tab.Screen
-        name="Events"
-        component={Events}
         options={{ headerShown: false }}
       />
       <Tab.Screen
@@ -92,6 +87,21 @@ function AppNavigator() {
       <Stack.Screen
         name="Main"
         component={MyTabs}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="SaveLocation"
+        component={SaveLocation}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ViewLocation"
+        component={ViewLocation}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="EditLocation"
+        component={EditLocation}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

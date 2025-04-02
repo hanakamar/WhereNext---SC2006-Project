@@ -24,7 +24,8 @@ export default function UserProfile({ navigation }) {
       const fetchedLocations = [
         {
           email: "test@gmail.com",
-          locationName: "Western Bar",
+          name: "Western Bar",
+          location: "123 Main St, Cityville",
           description: "Western Cuisine",
           date: "2021-10-10",
           time: "12:00",
@@ -32,7 +33,8 @@ export default function UserProfile({ navigation }) {
         },
         {
           email: "test2@gmail.com",
-          locationName: "Eastern Delight",
+          name: "Eastern Delight",
+          location: "456 Elm St, Townsville",
           description: "Eastern Cuisine",
           date: "2021-11-11",
           time: "18:00",
@@ -46,8 +48,8 @@ export default function UserProfile({ navigation }) {
   }, []);
 
   // Filter saved locations based on search query
-  const filteredLocations = savedLocations.filter((location) =>
-    location.locationName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredLocations = savedLocations.filter((name) =>
+    name.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // for rendering each saved location item element
@@ -55,16 +57,14 @@ export default function UserProfile({ navigation }) {
     return (
       <TouchableOpacity
         style={styles.locationItem}
-        onPress={() =>
-          router.push({
-            pathname: "../SavedLocations/EditLocation",
-            params: item,
-          })
-        }
+        onPress={() => {
+          navigation.push("EditLocation", item);
+          console.log(item);
+        }}
       >
         <Image source={item.image} style={styles.imageBox} />
         <View style={styles.locationDetails}>
-          <Text style={styles.locationName}> {item.locationName} </Text>
+          <Text style={styles.locationName}> {item.name} </Text>
           <Text style={styles.text}> Description: {item.description} </Text>
           <Text style={styles.text}>
             {" "}

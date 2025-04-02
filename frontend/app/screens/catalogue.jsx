@@ -162,7 +162,7 @@ const eventData = [
   },
 ];
 
-export default function Catalogue() {
+export default function Catalogue({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState("food");
   const [sortOption, setSortOption] = useState("distance");
   const [searchQuery, setSearchQuery] = useState("");
@@ -254,12 +254,10 @@ export default function Catalogue() {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            onPress={() =>
-              router.push({
-                pathname: "../SavedLocations/SaveLocation",
-                params: item,
-              })
-            }
+            onPress={() => {
+              navigation.push("ViewLocation", item);
+              console.log(item);
+            }}
           >
             <Image source={{ uri: item.image }} style={styles.image} />
             <Text style={styles.name}>{item.name}</Text>

@@ -7,13 +7,18 @@ import {
   Button,
   Image,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRoute } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 
-export default function SaveLocation() {
-  const router = useRouter();
-  const { name, location, description, email, image } = useLocalSearchParams();
+export default function SaveLocation({ navigation }) {
+  const route = useRoute();
+
+  const handleNavigate = () => {
+    navigation.navigate("Main"); // Navigate to the main app
+  };
+
+  const { name, location, description, email, image } = route.params;
 
   const [eventName] = useState(name);
   const [loc] = useState(location);
@@ -24,10 +29,8 @@ export default function SaveLocation() {
   const [showTimePicker, setShowTimePicker] = useState(false);
 
   const handleSave = () => {
-    // Handle save logic here, such as updating the database or state
     console.log("Saved", { name, desc, locDate, locTime, email });
-    // Navigate back or show a success message
-    router.back();
+    handleNavigate();
   };
 
   const onDateChange = (event, selectedDate) => {
@@ -111,7 +114,11 @@ export default function SaveLocation() {
       <View style={styles.buttonContainer}>
         <Button title="Save" onPress={handleSave} />
         <View style={styles.cancelButton}>
-          <Button title="Cancel" color="red" onPress={router.back} />
+          <Button
+            title="Cancel"
+            color="red"
+            onPress={() => navigation.goBack()}
+          />
         </View>
       </View>
     </View>

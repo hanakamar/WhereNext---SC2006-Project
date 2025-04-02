@@ -10,11 +10,13 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
+import { useRoute } from "@react-navigation/native";
 
-export default function EditLocation() {
+export default function EditLocation({ navigation }) {
   const router = useRouter();
+  const route = useRoute();
   const { name, location, description, email, image, date, time } =
-    useLocalSearchParams();
+    route.params;
 
   const [eventName] = useState(name);
   const [loc] = useState(location);
