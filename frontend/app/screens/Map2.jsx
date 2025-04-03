@@ -16,7 +16,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '@env';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.7 + 16; // card width + horizontal margin
+const CARD_WIDTH = width * 0.7 + 16;
 
 export default function MApp() {
   const [location, setLocation] = useState(null);
@@ -39,45 +39,16 @@ export default function MApp() {
 
       let loc = await Location.getCurrentPositionAsync({});
       setLocation(loc.coords);
-      setRegion({
+      const initialRegion = {
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
         latitudeDelta: 0.05,
         longitudeDelta: 0.05,
-      });
+      };
+      setRegion(initialRegion);
+      fetchFoodPlaces(initialRegion);
     })();
   }, []);
-
-  useEffect(() => {
-    if (!region) return;
-
-    const bounds = {
-      north: region.latitude + region.latitudeDelta / 2,
-      south: region.latitude - region.latitudeDelta / 2,
-      east: region.longitude + region.longitudeDelta / 2,
-      west: region.longitude - region.longitudeDelta / 2,
-    };
-
-    const fetchFoodPlaces = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/planner`, {
-          params: {
-            latitude: region.latitude,
-            longitude: region.longitude,
-            bounds: JSON.stringify(bounds),
-          },
-        });
-        setFoodPlaces(response.data.foodPlaces);
-        setLoading(false);
-      } catch (error) {
-        console.error('❌ Error fetching data:', error);
-        Alert.alert('Error', 'Failed to fetch places.');
-        setLoading(false);
-      }
-    };
-
-    fetchFoodPlaces();
-  }, [region]);
 
   const centerMapOnPlace = (lat, lng) => {
     if (mapRef.current) {
@@ -107,6 +78,38 @@ export default function MApp() {
     }
   };
 
+  const fetchFoodPlaces = async (reg) => {
+    const bounds = {
+      north: reg.latitude + reg.latitudeDelta / 2,
+      south: reg.latitude - reg.latitudeDelta / 2,
+      east: reg.longitude + reg.longitudeDelta / 2,
+      west: reg.longitude - reg.longitudeDelta / 2,
+    };
+
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/api/planner`, {
+        params: {
+          latitude: reg.latitude,
+          longitude: reg.longitude,
+          bounds: JSON.stringify(bounds),
+        },
+      });
+      setFoodPlaces(response.data.foodPlaces);
+    } catch (error) {
+      console.error('❌ Error refreshing data:', error);
+      Alert.alert('Error', 'Failed to refresh area data.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearchArea = async () => {
+    if (region) {
+      fetchFoodPlaces(region);
+    }
+  };
+
   if (loading || !location || !region) {
     return (
       <View style={styles.centered}>
@@ -127,27 +130,34 @@ export default function MApp() {
       >
         {Array.isArray(foodPlaces) && foodPlaces.map(place => (
           <Marker
-            key={`food-${place.id}`}
-            coordinate={{
-              latitude: parseFloat(place.lat),
-              longitude: parseFloat(place.lng),
-            }}
-            title={place.name}
-            description={place.address}
-            pinColor="orange"
-            onPress={() => handleMarkerPress(place.id)}
-          />
+          key={`food-${place.id}`}
+          coordinate={{
+            latitude: parseFloat(place.lat),
+            longitude: parseFloat(place.lng),
+          }}
+          title={place.name}
+          description={place.address}
+          pinColor={selectedPlaceId === place.id ? 'dodgerblue' : 'orange'} // ✅ Change color
+          onPress={() => handleMarkerPress(place.id)} // ✅ Scroll and highlight from pin
+        />
         ))}
       </MapView>
 
-      <TouchableOpacity
-        style={[styles.toggleButton, { bottom: showPlaceList ? 290 : 20 }]}
-        onPress={() => setShowPlaceList(!showPlaceList)}
-      >
-        <Text style={styles.toggleButtonText}>
-          {showPlaceList ? '↓' : '↑'}
-        </Text>
-      </TouchableOpacity>
+      <View style={[styles.bottomButtonGroup, { bottom: showPlaceList ? 310 : 20 }]}>
+        <TouchableOpacity
+          style={styles.toggleButton}
+          onPress={() => setShowPlaceList(!showPlaceList)}
+        >
+          <Text style={styles.toggleButtonText}>{showPlaceList ? '↓' : '↑'}</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={handleSearchArea}
+        >
+          <Text style={styles.searchButtonText}>Search This Area</Text>
+        </TouchableOpacity>
+      </View>
 
       {showPlaceList && (
         <View style={styles.placeListContainer}>
@@ -159,7 +169,9 @@ export default function MApp() {
             {foodPlaces.map(place => (
               <TouchableOpacity
                 key={place.id}
-                onPress={() => centerMapOnPlace(place.lat, place.lng)}
+                onPress={() => {
+                  setSelectedPlaceId(place.id);
+                  centerMapOnPlace(place.lat, place.lng);}}
                 style={[
                   styles.card,
                   selectedPlaceId === place.id && styles.selectedCard,
@@ -175,6 +187,9 @@ export default function MApp() {
                 )}
                 <Text style={styles.name}>{place.name}</Text>
                 <Text style={styles.address}>{place.address}</Text>
+                {place.rating && (
+                  <Text style={styles.ratingText}>⭐ {place.rating} ({place.totalRatings})</Text>
+                )}
                 <TouchableOpacity
                   style={styles.saveButton}
                   onPress={() => savePlace(place)}
@@ -206,18 +221,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   toggleButton: {
-    position: 'absolute',
-    alignSelf: 'center',
     backgroundColor: 'white',
     padding: 8,
     borderRadius: 20,
     elevation: 5,
-    zIndex: 10,
-    bottom: 220,
+    marginHorizontal: 6,
   },
   toggleButtonText: {
     fontSize: 24,
     color: '#333',
+  },
+  bottomButtonGroup: {
+    position: 'absolute',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    zIndex: 10,
+  },
+  searchButton: {
+    backgroundColor: '#1976d2',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginHorizontal: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
   placeListContainer: {
     position: 'absolute',
@@ -260,6 +291,11 @@ const styles = StyleSheet.create({
   address: {
     color: '#666',
     fontSize: 13,
+    marginBottom: 4,
+  },
+  ratingText: {
+    fontSize: 13,
+    color: '#444',
     marginBottom: 4,
   },
   saveButton: {
