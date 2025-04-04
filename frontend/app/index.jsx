@@ -15,6 +15,7 @@ import Login from "./Authentication/Login";
 import SaveLocation from "./SavedLocations/SaveLocation";
 import ViewLocation from "./SavedLocations/ViewLocation";
 import EditLocation from "./SavedLocations/EditLocation";
+import DailyPlanner from "./Planner/DailyPlanner";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -32,6 +33,8 @@ function MyTabs() {
             iconName = "storefront";
           } else if (route.name === "Profile") {
             iconName = "person";
+          } else if (route.name === "Planner") {
+            iconName = "calendar";
           }
 
           // Return the icon component
@@ -42,6 +45,11 @@ function MyTabs() {
       <Tab.Screen
         name="Map"
         component={MApp}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen
+        name="Planner"
+        component={DailyPlanner}
         options={{ headerShown: false }}
       />
       <Tab.Screen
