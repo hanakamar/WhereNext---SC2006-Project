@@ -16,6 +16,7 @@ import SaveLocation from "./SavedLocations/SaveLocation";
 import ViewLocation from "./SavedLocations/ViewLocation";
 import EditLocation from "./SavedLocations/EditLocation";
 import DailyPlanner from "./Planner/DailyPlanner";
+import PleaseLoginPage from "./screens/PleaseLoginPage";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -110,6 +111,11 @@ function AppNavigator() {
       <Stack.Screen
         name="EditLocation"
         component={EditLocation}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PleaseLoginPage"
+        component={PleaseLoginPage}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
@@ -254,9 +255,8 @@ export default function Catalogue({ navigation }) {
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.card}
-            onPress={() => {
-              navigation.push("ViewLocation", item);
-              console.log(item);
+            onPress={async () => {
+              navigation.navigate("ViewLocation", item);
             }}
           >
             <Image source={{ uri: item.image }} style={styles.image} />

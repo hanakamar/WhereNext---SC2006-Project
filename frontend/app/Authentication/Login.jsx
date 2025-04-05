@@ -1,13 +1,3 @@
-/*
- { View, Text } from "react-native";
-export default function Login() {
-  return (
-    <View>
-      <Text>Login Page</Text>
-    </View>
-  );
-}
-*/
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import CustomInput from "../components/CustomInput";
@@ -17,6 +7,7 @@ import { commonStyles } from "../styles/commonStyleSheet";
 import { Link, useRouter } from "expo-router";
 import config from "../../config";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -32,10 +23,6 @@ const Login = ({ navigation }) => {
       password: password,
     };
 
-    const handleNavigate = () => {
-      navigation.navigate("Main"); // Navigate to the main app
-    };
-
     /* Add backend stuff here to help login */
     try {
       const res = await axios.post(
@@ -45,6 +32,8 @@ const Login = ({ navigation }) => {
       if (res.data.status === "ok") {
         Alert.alert("Login Successful");
         console.log("Login Successful");
+        await AsyncStorage.setItem("isLoggedIn", "true"); // Save login state
+        await AsyncStorage.setItem("userEmail", email); // Save email
         navigation.navigate("Main"); // Navigate to the main app
       } else {
         Alert.alert("Login Failed", res.data.message || "Unexpected error");
