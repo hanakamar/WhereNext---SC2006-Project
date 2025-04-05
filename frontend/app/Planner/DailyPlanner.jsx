@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Modal, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Modal, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
@@ -15,12 +15,32 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
     // Load plans for current date from storage (implement with AsyncStorage)
     loadPlansForDate(currentDate);
+    
+    // Set up keyboard listeners
+    const keyboardWillShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setKeyboardVisible(true)
+    );
+    const keyboardWillHideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardVisible(false)
+    );
+
+    // Clean up listeners
+    return () => {
+      keyboardWillShowListener.remove();
+      keyboardWillHideListener.remove();
+    };
   }, [currentDate]);
 
+  // Rest of your existing functions...
+  
+  // [Include all your existing functions here]
   const loadPlansForDate = async (date) => {
     // Here you would fetch plans from AsyncStorage
     // For now, we'll use dummy data
@@ -58,15 +78,15 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
     }
 
     setIsSearching(true);
-    
+
     // Here you would call your Google Places API
     // For demo, we'll use a mix of saved places and dummy data
-    
-    const matchedSavedPlaces = savedPlaces 
-      ? savedPlaces.filter(place => 
+
+    const matchedSavedPlaces = savedPlaces
+      ? savedPlaces.filter(place =>
           place.name.toLowerCase().includes(query.toLowerCase()))
       : [];
-    
+
     // Simulating API call delay
     setTimeout(() => {
       const dummyApiResults = [
@@ -74,7 +94,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
         { id: 'g2', name: 'Blue Harbor Cafe', address: '101 Ocean Blvd', isOpen: checkIfOpen(7, 16) },
         { id: 'g3', name: 'Mountain View Hotel', address: '202 Hill Rd', isOpen: checkIfOpen(0, 24) },
       ].filter(place => place.name.toLowerCase().includes(query.toLowerCase()));
-      
+
       setSearchResults([...matchedSavedPlaces, ...dummyApiResults]);
       setIsSearching(false);
     }, 300);
@@ -90,7 +110,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
 
   const addPlan = () => {
     if (!newPlanTitle.trim() || !newPlanPlace) return;
-    
+
     const newPlan = {
       id: Date.now().toString(),
       title: newPlanTitle,
@@ -100,11 +120,11 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
         isOpen: checkIfOpenAtTime(newPlanPlace, newPlanTime), // Check if open at planned time
       },
     };
-    
+
     setPlans([...plans, newPlan]);
     setShowAddModal(false);
     resetNewPlanForm();
-    
+
     // Here you would save to AsyncStorage
   };
 
@@ -138,13 +158,13 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
       <View style={styles.planTimeContainer}>
         <Text style={styles.planTime}>{format(new Date(item.time), 'h:mm a')}</Text>
       </View>
-      
+
       <View style={styles.planContentContainer}>
         <TouchableOpacity onPress={() => navigateToPlaceDetails(item.place)}>
           <Text style={styles.planTitle}>{item.title}</Text>
           <Text style={styles.placeName}>{item.place.name}</Text>
           <Text style={styles.placeAddress}>{item.place.address}</Text>
-          
+
           <View style={styles.statusContainer}>
             <View style={[styles.statusIndicator, { backgroundColor: item.place.isOpen ? '#4CAF50' : '#F44336' }]} />
             <Text style={styles.statusText}>
@@ -153,9 +173,9 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
           </View>
         </TouchableOpacity>
       </View>
-      
-      <TouchableOpacity 
-        style={styles.removeButton} 
+
+      <TouchableOpacity
+        style={styles.removeButton}
         onPress={() => removePlan(item.id)}
       >
         <Ionicons name="close-circle" size={24} color="#FF6B6B" />
@@ -170,6 +190,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
         setNewPlanPlace(item);
         setSearchQuery(item.name);
         setSearchResults([]);
+        Keyboard.dismiss();
       }}
     >
       <Text style={styles.searchResultName}>{item.name}</Text>
@@ -180,7 +201,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.dateNavButton}
           onPress={() => {
             const prevDate = new Date(currentDate);
@@ -190,16 +211,16 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
         >
           <Ionicons name="chevron-back" size={24} color="#007bff" />
         </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.dateDisplay} 
+
+        <TouchableOpacity
+          style={styles.dateDisplay}
           onPress={() => setShowDatePicker(true)}
         >
           <Text style={styles.dateText}>{format(currentDate, 'EEEE, MMMM d')}</Text>
           <Ionicons name="calendar" size={20} color="#007bff" style={styles.calendarIcon} />
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.dateNavButton}
           onPress={() => {
             const nextDate = new Date(currentDate);
@@ -228,8 +249,8 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
         />
       )}
 
-      <TouchableOpacity 
-        style={styles.addButton} 
+      <TouchableOpacity
+        style={styles.addButton}
         onPress={() => setShowAddModal(true)}
       >
         <Ionicons name="add" size={32} color="#FFFFFF" />
@@ -250,18 +271,26 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
         />
       )}
 
-      {/* Add Plan Modal */}
+      {/* Add Plan Modal - Updated with KeyboardAvoidingView */}
       <Modal
         visible={showAddModal}
         animationType="slide"
         transparent={true}
         onRequestClose={() => setShowAddModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View 
+            style={[
+              styles.modalContent,
+              keyboardVisible && { maxHeight: '90%' }
+            ]}
+          >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Add New Plan</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 onPress={() => {
                   setShowAddModal(false);
                   resetNewPlanForm();
@@ -271,7 +300,10 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalBody}>
+            <ScrollView 
+              style={styles.modalBody}
+              keyboardShouldPersistTaps="handled"
+            >
               <Text style={styles.inputLabel}>Title</Text>
               <TextInput
                 style={styles.textInput}
@@ -282,7 +314,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
               />
 
               <Text style={styles.inputLabel}>Time</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.timeSelector}
                 onPress={() => setShowDatePicker(true)}
               >
@@ -328,6 +360,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
                       keyExtractor={item => item.id}
                       nestedScrollEnabled={true}
                       style={styles.searchResultsList}
+                      keyboardShouldPersistTaps="handled"
                     />
                   </View>
                 )
@@ -341,7 +374,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
                 </View>
               )}
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.addPlanButton,
                   (!newPlanTitle.trim() || !newPlanPlace) && styles.addPlanButtonDisabled
@@ -351,9 +384,12 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
               >
                 <Text style={styles.addPlanButtonText}>Add to Plan</Text>
               </TouchableOpacity>
+              
+              {/* Add some extra padding at the bottom when keyboard is visible */}
+              {keyboardVisible && <View style={{ height: 80 }} />}
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
