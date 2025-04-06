@@ -93,7 +93,7 @@ export default function MApp({ navigation }) {
         description: place.type,
         image: place.photoUrl,
         popularity: place.rating,
-        price: place.price_level || 2,
+        price: place.priceLevel || 2,
       };
       console.log("Saving place:", item);
       navigation.navigate("ViewLocation", item);

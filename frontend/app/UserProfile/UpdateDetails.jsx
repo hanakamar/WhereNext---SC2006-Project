@@ -1,64 +1,63 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import axios from "axios";
+import config from "../../config";
 
 const UpdateDetails = () => {
-  const router = useRouter();
-  const [name, setName] = useState('John Doe');
-  const [email, setEmail] = useState('john@example.com');
-  const [password, setPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
+  const navigation = useNavigation();
+  const route = useRoute();
+  const { name: initialName, email: initialEmail } = route.params || {};
+  const [name, setName] = useState(initialName || "");
+  const [email] = useState(initialEmail || ""); // Email is not editable
+  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [showVerification, setShowVerification] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState(''); // 'success' or 'error'
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState(""); // 'success' or 'error'
 
-  const handleUpdateName = () => {
+  const handleUpdateName = async () => {
     if (!name.trim()) {
-      setMessage('Name cannot be empty');
-      setMessageType('error');
+      setMessage("Name cannot be empty");
+      setMessageType("error");
       return;
     }
-    setMessage('Name updated successfully');
-    setMessageType('success');
-  };
 
-  const handleUpdateEmail = () => {
-    if (!email.trim()) {
-      setMessage('Email cannot be empty');
-      setMessageType('error');
-      return;
-    }
-    if (!email.includes('@')) {
-      setMessage('Please enter a valid email');
-      setMessageType('error');
-      return;
-    }
-    setShowVerification(true);
-    setMessage('Verification code sent to your email');
-    setMessageType('success');
-  };
+    try {
+      const response = await axios.patch(
+        `${config.API_URL}/api/profile/updateName/${email}`,
+        {
+          newName: name,
+        },
+        {
+          headers: {
+            Authorization: `Bearer YOUR_JWT_TOKEN_HERE`, // Replace with the actual JWT token
+          },
+        }
+      );
 
-  const handleVerifyEmail = () => {
-    if (!verificationCode.trim()) {
-      setMessage('Please enter verification code');
-      setMessageType('error');
-      return;
-    }
-    if (verificationCode === '123456') { // Dummy verification code
-      setMessage('Email updated successfully');
-      setMessageType('success');
-      setShowVerification(false);
-    } else {
-      setMessage('Invalid verification code');
-      setMessageType('error');
+      setMessage(response.data.message);
+      setMessageType("success");
+    } catch (error) {
+      setMessage(error.response?.data?.message || "An error occurred");
+      setMessageType("error");
     }
   };
 
-  const handleUpdatePassword = () => {
+  const handleUpdatePassword = async () => {
     if (!password || !newPassword) {
-      setMessage('Please fill in all password fields');
-      setMessageType('error');
+      setMessage("Please fill in all password fields");
+      setMessageType("error");
       return;
     }
 
@@ -71,118 +70,134 @@ const UpdateDetails = () => {
     if (/[!@#$%^&*(),.?":{}|<>]/.test(newPassword)) temp++;
 
     if (temp < 5) {
-      setMessage('Password must be at least 10 characters long and include uppercase, lowercase, numbers, and special characters');
-      setMessageType('error');
+      setMessage(
+        "Password must be at least 10 characters long and include uppercase, lowercase, numbers, and special characters"
+      );
+      setMessageType("error");
       return;
     }
 
-    setMessage('Password updated successfully');
-    setMessageType('success');
-    setPassword('');
-    setNewPassword('');
+    try {
+      console.log("Updating password for email:", password, newPassword);
+      console.log(`${config.API_URL}/api/profile/updatePassword/${email}`);
+      const response = await axios.patch(
+        `${config.API_URL}/api/profile/updatePassword/${email}`,
+        {
+          oldPassword: password,
+          newPassword: newPassword,
+        }
+      );
+
+      setMessage(response.data.message);
+      setMessageType("success");
+      setPassword("");
+      setNewPassword("");
+    } catch (error) {
+      console.log("Error updating password:", error);
+      setMessage(error.response?.data?.message || "An error occurred");
+      setMessageType("error");
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Update Details</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+        <Text style={styles.title}>Update Details</Text>
 
-      {/* Message Display */}
-      {message ? (
-        <View style={[styles.messageBox, messageType === 'error' ? styles.errorBox : styles.successBox]}>
-          <Text style={[styles.messageText, messageType === 'error' ? styles.errorText : styles.successText]}>
-            {message}
-          </Text>
-        </View>
-      ) : null}
-
-      {/* Update Name Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Update Name</Text>
-        <TextInput
-          style={styles.input}
-          value={name}
-          onChangeText={setName}
-          placeholder="Enter new name"
-        />
-        <TouchableOpacity style={styles.button} onPress={handleUpdateName}>
-          <Text style={styles.buttonText}>Update Name</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Update Email Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Update Email</Text>
-        <TextInput
-          style={styles.input}
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Enter new email"
-          keyboardType="email-address"
-        />
-        <TouchableOpacity style={styles.button} onPress={handleUpdateEmail}>
-          <Text style={styles.buttonText}>Update Email</Text>
-        </TouchableOpacity>
-
-        {showVerification && (
-          <View style={styles.verificationSection}>
-            <TextInput
-              style={styles.input}
-              value={verificationCode}
-              onChangeText={setVerificationCode}
-              placeholder="Enter verification code"
-              keyboardType="numeric"
-            />
-            <TouchableOpacity style={styles.button} onPress={handleVerifyEmail}>
-              <Text style={styles.buttonText}>Verify Email</Text>
-            </TouchableOpacity>
+        {/* Message Display */}
+        {message ? (
+          <View
+            style={[
+              styles.messageBox,
+              messageType === "error" ? styles.errorBox : styles.successBox,
+            ]}
+          >
+            <Text
+              style={[
+                styles.messageText,
+                messageType === "error" ? styles.errorText : styles.successText,
+              ]}
+            >
+              {message}
+            </Text>
           </View>
-        )}
-      </View>
+        ) : null}
 
-      {/* Update Password Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Update Password</Text>
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Current password"
-          secureTextEntry
-        />
-        <TextInput
-          style={styles.input}
-          value={newPassword}
-          onChangeText={setNewPassword}
-          placeholder="New password"
-          secureTextEntry
-        />
-        <TouchableOpacity style={styles.button} onPress={handleUpdatePassword}>
-          <Text style={styles.buttonText}>Update Password</Text>
+        {/* Display Email Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>My Email</Text>
+          <Text style={styles.emailText}>{email}</Text>
+        </View>
+
+        {/* Update Name Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Update Name</Text>
+          <TextInput
+            style={styles.input}
+            value={name}
+            onChangeText={setName}
+            placeholder="Enter new name"
+          />
+          <TouchableOpacity style={styles.button} onPress={handleUpdateName}>
+            <Text style={styles.buttonText}>Update Name</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Update Password Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Update Password</Text>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Current password"
+            secureTextEntry
+          />
+          <TextInput
+            style={styles.input}
+            value={newPassword}
+            onChangeText={setNewPassword}
+            placeholder="New password"
+            secureTextEntry
+          />
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleUpdatePassword}
+          >
+            <Text style={styles.buttonText}>Update Password</Text>
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={[styles.buttonText, styles.backButtonText]}>
+            Back to Profile
+          </Text>
         </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity 
-        style={styles.backButton}
-        onPress={() => router.back()}
-      >
-        <Text style={[styles.buttonText, styles.backButtonText]}>Back to Profile</Text>
-      </TouchableOpacity>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#F5F5F5",
+  },
+  scrollViewContainer: {
     padding: 20,
-    backgroundColor: '#F5F5F5',
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#007BFF',
+    fontWeight: "bold",
+    color: "#007BFF",
     marginBottom: 20,
-    textAlign: 'center',
+    textAlign: "center",
   },
   messageBox: {
     padding: 10,
@@ -190,30 +205,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   errorBox: {
-    backgroundColor: '#ffebee',
+    backgroundColor: "#ffebee",
     borderLeftWidth: 4,
-    borderLeftColor: '#dc3545',
+    borderLeftColor: "#dc3545",
   },
   successBox: {
-    backgroundColor: '#e8f5e9',
+    backgroundColor: "#e8f5e9",
     borderLeftWidth: 4,
-    borderLeftColor: '#28a745',
+    borderLeftColor: "#28a745",
   },
   messageText: {
     fontSize: 14,
   },
   errorText: {
-    color: '#dc3545',
+    color: "#dc3545",
   },
   successText: {
-    color: '#28a745',
+    color: "#28a745",
   },
   section: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 10,
     padding: 15,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -224,42 +239,44 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
     marginBottom: 10,
   },
   input: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     padding: 12,
     borderRadius: 8,
     marginBottom: 10,
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#007BFF',
+    backgroundColor: "#007BFF",
     padding: 15,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 5,
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  verificationSection: {
-    marginTop: 10,
+  emailText: {
+    fontSize: 16,
+    color: "#666",
+    marginBottom: 10,
   },
   backButton: {
-    backgroundColor: '#6c757d',
+    backgroundColor: "#6c757d",
     padding: 15,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 10,
   },
   backButtonText: {
-    color: '#fff',
+    color: "#fff",
   },
 });
 
-export default UpdateDetails; 
+export default UpdateDetails;

@@ -41,40 +41,63 @@ const signupUser = async (req, res) => {
 
 const updatePassword = async (req, res) => {
     const { oldPassword, newPassword } = req.body;
-    const userId = req.user._id; // Extracted from JWT middleware
+    const { email } = req.params; // Extract email from query parameters
 
     try {
-        // Find the user
-        const profile = await Profile.findById(userId);
+        // Find the user by email
+        const profile = await Profile.findOne({ email });
         if (!profile) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Verify old password
-        const isMatch = await bcrypt.compare(oldPassword, profile.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: "Incorrect old password" });
-        }
+        // Call the instance method to update the password
+        const result = await profile.updatePassword(oldPassword, newPassword);
 
+        const token = createToken(profile._id);
 
-        // Save updated password
-        const update = await Profile.updatePassword(oldPassword, newPassword);
-        const token = createToken(update._id);
-
-        res.status(200).json({ message: "Password updated successfully", token });
+        res.status(200).json({ message: result.message, token });
+        console.log("Password updated successfully for email:", email);
     } catch (error) {
         res.status(500).json({ message: error.message || "An error occurred" });
     }
 };
 
-// // Get All Profile (LoginUser)
-// const getAllProfiles = async (req, res) => {
-//     try {
-//         const profiles = await Profile.find(); // Retrieve all profiles
-//         res.status(200).json(profiles);
-//     } catch (error) {
-//         res.status(500).json({ message: 'Server error' });
-//     }
-// }
+// Get All Profile (LoginUser)
+const getProfileById = async (req, res) => {
+    const { email } = req.query;
 
-module.exports = { signupUser, loginUser, updatePassword };
+    if (!email) {
+        return res.status(400).json({ message: 'Email query parameter is required' });
+    }
+
+    try {
+        const profiles = await Profile.find({ email }); // Retrieve profiles by email
+        res.status(200).json(profiles);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error' });
+    }
+}
+
+const updateName = async (req, res) => {
+    const { newName } = req.body;
+    const { email } = req.params; // Extracted from URL params
+
+    try {
+        // Find the user by email
+        const profile = await Profile.findOne({ email });
+        if (!profile) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Update the name
+        profile.name = newName;
+        await profile.save();
+
+        res.status(200).json({ message: "Name updated successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message || "An error occurred" });
+    }
+};
+
+
+module.exports = { signupUser, loginUser, updatePassword, getProfileById, updateName };

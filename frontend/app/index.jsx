@@ -16,6 +16,9 @@ import SaveLocation from "./SavedLocations/SaveLocation";
 import ViewLocation from "./SavedLocations/ViewLocation";
 import EditLocation from "./SavedLocations/EditLocation";
 import DailyPlanner from "./Planner/DailyPlanner";
+import UpdateDetails from "./UserProfile/UpdateDetails";
+import SignUp from "./Authentication/SignUp";
+import PleaseLoginPage from "./screens/PleaseLoginPage";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -59,10 +62,27 @@ function MyTabs() {
       />
       <Tab.Screen
         name="Profile"
-        component={UserProfile}
+        component={ProfileStack}
         options={{ headerShown: false }}
       />
     </Tab.Navigator>
+  );
+}
+
+function ProfileStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="UserProfile"
+        component={UserProfile}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="UpdateDetails"
+        component={UpdateDetails}
+        options={{ headerShown: false }}
+      />
+    </Stack.Navigator>
   );
 }
 
@@ -93,6 +113,11 @@ function AppNavigator() {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="SignUp"
+        component={SignUp}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="Main"
         component={MyTabs}
         options={{ headerShown: false }}
@@ -110,6 +135,11 @@ function AppNavigator() {
       <Stack.Screen
         name="EditLocation"
         component={EditLocation}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PleaseLoginPage"
+        component={PleaseLoginPage}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

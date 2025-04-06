@@ -1,19 +1,49 @@
-import React, { useState, useEffect } from "react";
-import {
-  SafeAreaView,
-  View,
-  Image,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, Alert, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
+import axios from "axios";
+import config from "../../config"; // Adjust the path as necessary
 
-export default function UserProfile({ navigation }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
-  const [email, setEmail] = useState(null); // Replace with actual user email logic
+const UserProfile = ({ navigation }) => {
   const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
+  const [email, setEmail] = useState(null); // State for user email
+  const [name, setName] = useState(null); // State for user name
+  // Dummy user data - replace with actual user data later
+  const [userDetails, setUserDetails] = useState({
+    country: "Singapore",
+  });
+
+  const handleUpdateDetails = () => {
+    navigation.navigate("UpdateDetails", {
+      name: name,
+      email: email,
+    });
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action cannot be undone.",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: () => {
+            Alert.alert("Success", "Account deleted successfully");
+            router.push("/Authentication/Welcome");
+          },
+          style: "destructive",
+        },
+      ]
+    );
+  };
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -24,6 +54,30 @@ export default function UserProfile({ navigation }) {
     };
     checkLoginStatus();
   }, []);
+
+  useEffect(() => {
+    const fetchProfileByEmail = async () => {
+      if (isLoggedIn) {
+        try {
+          const response = await axios.get(
+            `${config.API_URL}/api/profile/profiles`,
+            {
+              params: {
+                email: email,
+              },
+            }
+          );
+          setName(response.data[0].name);
+        } catch (error) {
+          console.error("Error fetching profile:", error);
+        }
+      } else {
+        console.log("User is not logged in.");
+      }
+    };
+
+    fetchProfileByEmail();
+  }, [isLoggedIn, email]);
 
   if (!isLoggedIn) {
     return (
@@ -39,79 +93,129 @@ export default function UserProfile({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.profileImageContainer}>
-          <Image
-            source={require("../../assets/images/pfp.png")}
-            style={styles.profileImage}
-          />
+    <View style={styles.container}>
+      <Text style={styles.title}>User Profile</Text>
+
+      {/* User Details Section */}
+      <View style={styles.detailsContainer}>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Name:</Text>
+          <Text style={styles.value}>{name}</Text>
         </View>
-        <View style={styles.profileInfo}>
-          <Text style={styles.emailText}>{email}</Text>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Email:</Text>
+          <Text style={styles.value}>{email}</Text>
         </View>
-        <View style={styles.editProfileContainer}>
-          <TouchableOpacity style={styles.editProfileButton}>
-            <Text style={styles.editProfileText}>Edit profile</Text>
-          </TouchableOpacity>
+        <View style={styles.detailRow}>
+          <Text style={styles.label}>Country:</Text>
+          <Text style={styles.value}>{userDetails.country}</Text>
         </View>
       </View>
-    </SafeAreaView>
+
+      {/* Action Buttons */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity
+          style={styles.updateButton}
+          onPress={handleUpdateDetails}
+        >
+          <Text style={styles.buttonText}>Update Details</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={handleDeleteAccount}
+        >
+          <Text style={[styles.buttonText, styles.deleteButtonText]}>
+            Delete Account
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
+    padding: 20,
+    backgroundColor: "#F5F5F5",
     justifyContent: "center",
     alignItems: "center",
   },
-  header: {
-    backgroundColor: "#FFFFFF",
-    paddingBottom: 21,
-    justifyContent: "center",
-    alignItems: "center",
-    width: "100%",
+  loginButton: {
+    backgroundColor: "#FF0000",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
   },
-  profileImageContainer: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    overflow: "hidden",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  profileImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-  },
-  profileInfo: {
-    alignItems: "center",
-    marginBottom: 11,
-  },
-  emailText: {
-    color: "#000000",
-    fontSize: 23,
+  loginButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
     textAlign: "center",
   },
-  editProfileContainer: {
-    alignItems: "center",
-    marginHorizontal: 20,
-  },
-  editProfileButton: {
-    width: 164,
-    backgroundColor: "#B1D9FF",
-    borderRadius: 15,
-    paddingVertical: 3,
-    paddingHorizontal: 16,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  editProfileText: {
-    color: "#000000",
-    fontSize: 18,
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#007BFF",
+    marginBottom: 20,
     textAlign: "center",
+  },
+  detailsContainer: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  detailRow: {
+    flexDirection: "row",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0E0E0",
+  },
+  label: {
+    flex: 1,
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "600",
+  },
+  value: {
+    flex: 2,
+    fontSize: 16,
+    color: "#333",
+  },
+  buttonContainer: {
+    gap: 15,
+  },
+  updateButton: {
+    backgroundColor: "#007BFF",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  deleteButton: {
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    borderWidth: 2,
+    borderColor: "#DC3545",
+  },
+  buttonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  deleteButtonText: {
+    color: "#DC3545",
   },
 });
+
+export default UserProfile;

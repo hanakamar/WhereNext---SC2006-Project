@@ -4,15 +4,22 @@ import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
 import { commonStyles } from "../styles/commonStyleSheet";
 import { Link, useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Welcome({ navigation }) {
-  const handleNavigate = () => {
+  const handleSkip = async () => {
+    try {
+      await AsyncStorage.clear();
+      console.log("AsyncStorage cleared!");
+    } catch (e) {
+      console.error("Failed to clear AsyncStorage:", e);
+    }
     navigation.navigate("Main"); // Navigate to the main app
   };
   const router = useRouter();
   return (
     <View style={[commonStyles.container, styles.welcomeContainer]}>
-      <TouchableOpacity style={styles.skipButton} onPress={handleNavigate}>
+      <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
         <Text style={styles.skipText}>Skip for now</Text>
       </TouchableOpacity>
 

@@ -123,7 +123,7 @@ export default function Catalogue({ navigation }) {
           place.lng
         ),
         popularity: place.rating || 4.0,
-        price: place.price_level || 2,
+        price: place.priceLevel || 2,
       }));
 
       setRestaurantData(mappedResults);

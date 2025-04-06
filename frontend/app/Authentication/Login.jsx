@@ -17,6 +17,8 @@ import { commonStyles } from "../styles/commonStyleSheet";
 import { Link, useRouter } from "expo-router";
 import config from "../../config";
 import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect } from "react";
 
 const Login = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -45,12 +47,14 @@ const Login = ({ navigation }) => {
       if (res.data.status === "ok") {
         Alert.alert("Login Successful");
         console.log("Login Successful");
+        await AsyncStorage.setItem("isLoggedIn", "true"); // Save login state
+        await AsyncStorage.setItem("userEmail", email); // Save email
         navigation.navigate("Main"); // Navigate to the main app
       } else {
         Alert.alert("Login Failed", res.data.message || "Unexpected error");
       }
     } catch (error) {
-      Alert.alert("Error", "An unexpected error occurred");
+      Alert.alert("Error", error.message);
     }
   }
 
@@ -92,9 +96,9 @@ const Login = ({ navigation }) => {
 
       <View style={styles.footerContainer}>
         <Text style={styles.footerText}>Don't have an account? </Text>
-        <Link href="./SignUp" style={styles.signUpLink}>
-          Sign Up
-        </Link>
+        <TouchableOpacity onPress={() => navigation.navigate("SignUp")}>
+          <Text style={styles.signUpLink}>Sign Up</Text>
+        </TouchableOpacity>
         {/*<TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
           <Text style={styles.signUpLink}>Sign Up</Text>
         </TouchableOpacity> */}
