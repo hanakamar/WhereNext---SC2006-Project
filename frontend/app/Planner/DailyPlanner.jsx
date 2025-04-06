@@ -1,14 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, SafeAreaView, Modal, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 
 const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
   const [plans, setPlans] = useState([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [newPlanTitle, setNewPlanTitle] = useState('');
   const [newPlanTime, setNewPlanTime] = useState(new Date());
   const [newPlanPlace, setNewPlanPlace] = useState(null);
@@ -18,8 +15,8 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   useEffect(() => {
-    // Load plans for current date from storage (implement with AsyncStorage)
-    loadPlansForDate(currentDate);
+    // Load saved plans (implement with AsyncStorage)
+    loadSavedPlans();
     
     // Set up keyboard listeners
     const keyboardWillShowListener = Keyboard.addListener(
@@ -36,19 +33,16 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
       keyboardWillShowListener.remove();
       keyboardWillHideListener.remove();
     };
-  }, [currentDate]);
+  }, []);
 
-  // Rest of your existing functions...
-  
-  // [Include all your existing functions here]
-  const loadPlansForDate = async (date) => {
+  const loadSavedPlans = async () => {
     // Here you would fetch plans from AsyncStorage
     // For now, we'll use dummy data
     const dummyPlans = [
       {
         id: '1',
         title: 'Lunch',
-        time: new Date(date).setHours(12, 30),
+        time: new Date().setHours(12, 30),
         place: {
           id: 'place1',
           name: 'Bistro Cafe',
@@ -59,7 +53,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
       {
         id: '2',
         title: 'Movie Night',
-        time: new Date(date).setHours(19, 0),
+        time: new Date().setHours(19, 0),
         place: {
           id: 'place2',
           name: 'Grand Cinema',
@@ -153,6 +147,53 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
     // Here you would also remove from AsyncStorage
   };
 
+  // Time adjustment functions - UPDATED for better handling
+  const adjustHour = (increment) => {
+    const newTime = new Date(newPlanTime);
+    const currentHour = newTime.getHours();
+    let newHour = currentHour + increment;
+    
+    // Handle hour wrapping correctly
+    if (newHour < 0) newHour = 23;
+    if (newHour > 23) newHour = 0;
+    
+    newTime.setHours(newHour);
+    setNewPlanTime(newTime);
+  };
+
+  const adjustMinute = (increment) => {
+    const newTime = new Date(newPlanTime);
+    const currentMinute = newTime.getMinutes();
+    let newMinute = currentMinute + increment;
+    
+    // Handle minute wrapping correctly
+    if (newMinute < 0) {
+      newMinute = 55; // Wrap to 55 minutes when going below 0
+      adjustHour(-1); // Decrement hour
+    } else if (newMinute > 59) {
+      newMinute = 0; // Wrap to 0 minutes when exceeding 59
+      adjustHour(1); // Increment hour
+    }
+    
+    newTime.setMinutes(newMinute);
+    setNewPlanTime(newTime);
+  };
+
+  const toggleAMPM = () => {
+    const newTime = new Date(newPlanTime);
+    const currentHour = newTime.getHours();
+    
+    if (currentHour < 12) {
+      // Switch to PM (add 12 hours)
+      newTime.setHours(currentHour + 12);
+    } else {
+      // Switch to AM (subtract 12 hours)
+      newTime.setHours(currentHour - 12);
+    }
+    
+    setNewPlanTime(newTime);
+  };
+
   const renderPlanItem = ({ item }) => (
     <View style={styles.planItem}>
       <View style={styles.planTimeContainer}>
@@ -201,42 +242,14 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.dateNavButton}
-          onPress={() => {
-            const prevDate = new Date(currentDate);
-            prevDate.setDate(prevDate.getDate() - 1);
-            setCurrentDate(prevDate);
-          }}
-        >
-          <Ionicons name="chevron-back" size={24} color="#007bff" />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.dateDisplay}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Text style={styles.dateText}>{format(currentDate, 'EEEE, MMMM d')}</Text>
-          <Ionicons name="calendar" size={20} color="#007bff" style={styles.calendarIcon} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.dateNavButton}
-          onPress={() => {
-            const nextDate = new Date(currentDate);
-            nextDate.setDate(nextDate.getDate() + 1);
-            setCurrentDate(nextDate);
-          }}
-        >
-          <Ionicons name="chevron-forward" size={24} color="#007bff" />
-        </TouchableOpacity>
+        <Text style={styles.headerTitle}>My Plan</Text>
       </View>
 
       {plans.length === 0 ? (
         <View style={styles.emptyState}>
           <Ionicons name="calendar-outline" size={64} color="#007bff" />
-          <Text style={styles.emptyStateText}>No plans for this day</Text>
-          <Text style={styles.emptyStateSubtext}>Tap + to add your first plan</Text>
+          <Text style={styles.emptyStateText}>No places saved</Text>
+          <Text style={styles.emptyStateSubtext}>Tap + to add a new place</Text>
         </View>
       ) : (
         <FlatList
@@ -256,22 +269,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
         <Ionicons name="add" size={32} color="#FFFFFF" />
       </TouchableOpacity>
 
-      {/* Date Picker Modal */}
-      {showDatePicker && (
-        <DateTimePicker
-          value={currentDate}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) {
-              setCurrentDate(selectedDate);
-            }
-          }}
-        />
-      )}
-
-      {/* Add Plan Modal - Updated with KeyboardAvoidingView */}
+      {/* Add Plan Modal */}
       <Modal
         visible={showAddModal}
         animationType="slide"
@@ -289,7 +287,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
             ]}
           >
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Add New Plan</Text>
+              <Text style={styles.modalTitle}>Add New Place</Text>
               <TouchableOpacity
                 onPress={() => {
                   setShowAddModal(false);
@@ -314,15 +312,68 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
               />
 
               <Text style={styles.inputLabel}>Time</Text>
-              <TouchableOpacity
-                style={styles.timeSelector}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Text style={styles.timeText}>
-                  {format(newPlanTime, 'h:mm a')}
-                </Text>
-                <Ionicons name="time-outline" size={20} color="#007bff" />
-              </TouchableOpacity>
+              <View style={styles.timePickerContainer}>
+                {/* Hour controls */}
+                <View style={styles.timePickerColumn}>
+                  <TouchableOpacity 
+                    style={styles.timeAdjustButton}
+                    onPress={() => adjustHour(1)}
+                    activeOpacity={0.6}
+                  >
+                    <Ionicons name="chevron-up" size={24} color="#007bff" />
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.timeDisplayText}>
+                    {format(newPlanTime, 'h')}
+                  </Text>
+                  
+                  <TouchableOpacity 
+                    style={styles.timeAdjustButton}
+                    onPress={() => adjustHour(-1)}
+                    activeOpacity={0.6}
+                  >
+                    <Ionicons name="chevron-down" size={24} color="#007bff" />
+                  </TouchableOpacity>
+                </View>
+                
+                <Text style={styles.timeColon}>:</Text>
+                
+                {/* Minute controls */}
+                <View style={styles.timePickerColumn}>
+                  <TouchableOpacity 
+                    style={styles.timeAdjustButton}
+                    onPress={() => adjustMinute(5)}
+                    activeOpacity={0.6}
+                  >
+                    <Ionicons name="chevron-up" size={24} color="#007bff" />
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.timeDisplayText}>
+                    {format(newPlanTime, 'mm')}
+                  </Text>
+                  
+                  <TouchableOpacity 
+                    style={styles.timeAdjustButton}
+                    onPress={() => adjustMinute(-5)}
+                    activeOpacity={0.6}
+                  >
+                    <Ionicons name="chevron-down" size={24} color="#007bff" />
+                  </TouchableOpacity>
+                </View>
+                
+                {/* AM/PM toggle */}
+                <View style={styles.timePickerColumn}>
+                  <TouchableOpacity 
+                    style={styles.ampmButton}
+                    onPress={toggleAMPM}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.ampmText}>
+                      {format(newPlanTime, 'a')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
 
               <Text style={styles.inputLabel}>Place</Text>
               <View style={styles.searchContainer}>
@@ -382,7 +433,7 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
                 onPress={addPlan}
                 disabled={!newPlanTitle.trim() || !newPlanPlace}
               >
-                <Text style={styles.addPlanButtonText}>Add to Plan</Text>
+                <Text style={styles.addPlanButtonText}>Save Place</Text>
               </TouchableOpacity>
               
               {/* Add some extra padding at the bottom when keyboard is visible */}
@@ -403,28 +454,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  dateNavButton: {
-    padding: 8,
-  },
-  dateDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-  },
-  dateText: {
-    fontSize: 18,
+  headerTitle: {
+    fontSize: 20,
     fontWeight: '600',
     color: '#333333',
-    marginRight: 8,
-  },
-  calendarIcon: {
-    marginLeft: 4,
   },
   emptyState: {
     flex: 1,
@@ -567,17 +606,60 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333333',
   },
-  timeSelector: {
+  // Time picker styles - ENHANCED
+  timePickerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: '#F5F5F5',
     borderRadius: 8,
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    padding: 16,
+    marginBottom: 16,
+  },
+  timePickerColumn: {
+    alignItems: 'center',
+    marginHorizontal: 10,
+    minWidth: 40,
+  },
+  timeAdjustButton: {
+    padding: 10,
+    backgroundColor: '#E8E8E8',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: 4,
+  },
+  timeDisplayText: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#333333',
+    marginVertical: 8,
+    minWidth: 40,
+    textAlign: 'center',
+  },
+  timeColon: {
+    fontSize: 28,
+    fontWeight: '600',
+    color: '#333333',
+    marginHorizontal: 4,
+  },
+  ampmButton: {
+    backgroundColor: '#007bff',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+    minWidth: 60,
     alignItems: 'center',
   },
-  timeText: {
-    fontSize: 16,
-    color: '#333333',
+  ampmText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    textTransform: 'uppercase',
   },
   searchContainer: {
     position: 'relative',
