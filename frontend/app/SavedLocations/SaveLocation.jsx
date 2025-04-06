@@ -10,6 +10,11 @@ import {
 import { useRoute } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect } from "react";
+import axios from "axios";
+import config from "../../config"; // Adjust the path as necessary
+import { Alert } from "react-native";
 
 export default function SaveLocation({ navigation }) {
   const route = useRoute();
@@ -18,19 +23,57 @@ export default function SaveLocation({ navigation }) {
     navigation.navigate("Main"); // Navigate to the main app
   };
 
-  const { name, location, description, email, image } = route.params;
+  const { name, address, description, image, popularity, price } =
+    route.params || {};
 
   const [eventName] = useState(name);
-  const [loc] = useState(location);
+  const [loc] = useState(address);
   const [desc] = useState(description);
   const [locDate, setDate] = useState(null);
   const [locTime, setTime] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
+  const [email, setEmail] = useState(null); // State for user email
 
-  const handleSave = () => {
-    console.log("Saved", { name, desc, locDate, locTime, email });
-    handleNavigate();
+  useEffect(() => {
+    // Check if the user is logged in and get the email
+    const checkLoginStatus = async () => {
+      const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+      const userEmail = await AsyncStorage.getItem("userEmail");
+      setIsLoggedIn(loginStatus === "true");
+      setEmail(userEmail || ""); // Set the email state if it exists
+    };
+
+    checkLoginStatus();
+  }, []);
+
+  const handleSave = async () => {
+    const timeString = locTime
+      ? locTime.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        })
+      : null;
+
+    const newLocation = {
+      email: email,
+      locationName: eventName,
+      description: desc,
+      date: locDate,
+      time: timeString,
+    };
+    try {
+      console.log("Location saved successfully:", newLocation);
+      await axios.post(`${config.API_URL}/api/savedLocations/`, newLocation);
+
+      Alert.alert("Location saved successfully!");
+      navigation.navigate("Main"); // Navigate to the main app
+    } catch (error) {
+      console.error("Error saving location:", error);
+      Alert.alert("Error", "Failed to save location.");
+    }
   };
 
   const onDateChange = (event, selectedDate) => {
@@ -52,7 +95,7 @@ export default function SaveLocation({ navigation }) {
       {image && <Image source={{ uri: image }} style={styles.image} />}
       <Text style={styles.title}>Save Location</Text>
       <View style={styles.infoContainer}>
-        <Text style={styles.label}>Event Name</Text>
+        <Text style={styles.label}>Name</Text>
         <Text style={styles.value}>{eventName}</Text>
       </View>
       <View style={styles.infoContainer}>

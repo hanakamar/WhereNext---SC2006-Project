@@ -44,9 +44,9 @@ const getLocationsByUser = async (req, res) => {
 
 // Create a new Saved Location
 const saveLocation = async (req, res) => {
-    const { user, locationName, description, date, time } = req.body;
+    const { email, locationName, description, date, time } = req.body;
     try {
-        const newLocation = await SavedLocationsModel.create({ user, locationName, description, date, time }); // Renamed variable to newLocation
+        const newLocation = await SavedLocationsModel.create({ email, locationName, description, date, time }); // Renamed variable to newLocation
         res.status(201).json(newLocation);
     } catch (error) {
         res.status(400).json({ error: error.message });

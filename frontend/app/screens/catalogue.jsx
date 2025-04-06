@@ -1,10 +1,20 @@
-import { useState, useEffect } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Picker } from '@react-native-picker/picker';
-import { Ionicons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
-import { API_BASE_URL } from '@env';
+import { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { Picker } from "@react-native-picker/picker";
+import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import { API_BASE_URL } from "@env";
 
 // Dummy event data
 const eventData = [
@@ -15,10 +25,10 @@ const fallbackRestaurantData = [
   // same as before
 ];
 
-export default function Catalogue() {
-  const [selectedCategory, setSelectedCategory] = useState('food');
-  const [sortOption, setSortOption] = useState('distance');
-  const [searchQuery, setSearchQuery] = useState('');
+export default function Catalogue({ navigation }) {
+  const [selectedCategory, setSelectedCategory] = useState("food");
+  const [sortOption, setSortOption] = useState("distance");
+  const [searchQuery, setSearchQuery] = useState("");
   const [restaurantData, setRestaurantData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -32,7 +42,7 @@ export default function Catalogue() {
         setLoading(true);
         let { status } = await Location.requestForegroundPermissionsAsync();
 
-        if (status !== 'granted') {
+        if (status !== "granted") {
           console.log("Location permission denied, using fallback data");
           setRestaurantData(fallbackRestaurantData);
           setUsingFallbackData(true);
@@ -54,13 +64,13 @@ export default function Catalogue() {
       }
     };
 
-    if (selectedCategory === 'food') {
+    if (selectedCategory === "food") {
       getLocationAndRestaurants();
     }
   }, [selectedCategory]);
 
   useEffect(() => {
-    if (selectedCategory === 'food' && userLocation && !usingFallbackData) {
+    if (selectedCategory === "food" && userLocation && !usingFallbackData) {
       const delaySearch = setTimeout(() => {
         fetchNearbyRestaurants(userLocation);
       }, 500);
@@ -75,8 +85,10 @@ export default function Catalogue() {
     const dLon = deg2rad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(deg2rad(lat1)) *
+        Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Number(distance.toFixed(1));
@@ -89,8 +101,10 @@ export default function Catalogue() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE_URL}/api/planner?latitude=${coords.latitude}&longitude=${coords.longitude}`);
-      if (!response.ok) throw new Error('Failed to fetch food data');
+      const response = await fetch(
+        `${API_BASE_URL}/api/planner?latitude=${coords.latitude}&longitude=${coords.longitude}`
+      );
+      if (!response.ok) throw new Error("Failed to fetch food data");
 
       const data = await response.json();
 
@@ -98,9 +112,16 @@ export default function Catalogue() {
         id: place.id || `place_${index}`,
         name: place.name,
         address: place.address,
-        image: place.photoUrl || 'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png',
-        description: place.type === 'cafe' ? 'Cafe' : 'Restaurant',
-        distance: calculateDistance(coords.latitude, coords.longitude, place.lat, place.lng),
+        image:
+          place.photoUrl ||
+          "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+        description: place.type === "cafe" ? "Cafe" : "Restaurant",
+        distance: calculateDistance(
+          coords.latitude,
+          coords.longitude,
+          place.lat,
+          place.lng
+        ),
         popularity: place.rating || 4.0,
         price: place.price_level || 2,
       }));
@@ -118,16 +139,18 @@ export default function Catalogue() {
     }
   };
 
-  let data = selectedCategory === 'food' ? [...restaurantData] : [...eventData];
+  let data = selectedCategory === "food" ? [...restaurantData] : [...eventData];
 
-  if (selectedCategory === 'events') {
-    data = data.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  if (selectedCategory === "events") {
+    data = data.filter((item) =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   }
 
   data.sort((a, b) => {
-    if (sortOption === 'distance') return a.distance - b.distance;
-    if (sortOption === 'popularity') return b.popularity - a.popularity;
-    if (sortOption === 'price') return a.price - b.price;
+    if (sortOption === "distance") return a.distance - b.distance;
+    if (sortOption === "popularity") return b.popularity - a.popularity;
+    if (sortOption === "price") return a.price - b.price;
     return 0;
   });
 
@@ -135,13 +158,47 @@ export default function Catalogue() {
     <View style={styles.container}>
       {/* Toggle Buttons */}
       <View style={styles.toggleContainer}>
-        <TouchableOpacity style={[styles.toggleButton, selectedCategory === 'food' && styles.activeToggle]} onPress={() => setSelectedCategory('food')}>
-          <Ionicons name="fast-food" size={24} color={selectedCategory === 'food' ? 'white' : 'gray'} />
-          <Text style={[styles.toggleText, selectedCategory === 'food' && styles.activeToggleText]}>Food</Text>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            selectedCategory === "food" && styles.activeToggle,
+          ]}
+          onPress={() => setSelectedCategory("food")}
+        >
+          <Ionicons
+            name="fast-food"
+            size={24}
+            color={selectedCategory === "food" ? "white" : "gray"}
+          />
+          <Text
+            style={[
+              styles.toggleText,
+              selectedCategory === "food" && styles.activeToggleText,
+            ]}
+          >
+            Food
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.toggleButton, selectedCategory === 'events' && styles.activeToggle]} onPress={() => setSelectedCategory('events')}>
-          <Ionicons name="calendar" size={24} color={selectedCategory === 'events' ? 'white' : 'gray'} />
-          <Text style={[styles.toggleText, selectedCategory === 'events' && styles.activeToggleText]}>Events</Text>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            selectedCategory === "events" && styles.activeToggle,
+          ]}
+          onPress={() => setSelectedCategory("events")}
+        >
+          <Ionicons
+            name="calendar"
+            size={24}
+            color={selectedCategory === "events" ? "white" : "gray"}
+          />
+          <Text
+            style={[
+              styles.toggleText,
+              selectedCategory === "events" && styles.activeToggleText,
+            ]}
+          >
+            Events
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -154,7 +211,11 @@ export default function Catalogue() {
           onChangeText={setSearchQuery}
         />
         <View style={styles.pickerContainer}>
-          <Picker selectedValue={sortOption} onValueChange={setSortOption} style={styles.picker}>
+          <Picker
+            selectedValue={sortOption}
+            onValueChange={setSortOption}
+            style={styles.picker}
+          >
             <Picker.Item label="Distance" value="distance" />
             <Picker.Item label="Popularity" value="popularity" />
             <Picker.Item label="Price" value="price" />
@@ -163,15 +224,17 @@ export default function Catalogue() {
       </View>
 
       {/* Loading Spinner */}
-      {loading && selectedCategory === 'food' && (
+      {loading && selectedCategory === "food" && (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4a7cff" />
-          <Text style={styles.loadingText}>Finding restaurants near you...</Text>
+          <Text style={styles.loadingText}>
+            Finding restaurants near you...
+          </Text>
         </View>
       )}
 
       {/* List */}
-      {(!loading || selectedCategory === 'events') && (
+      {(!loading || selectedCategory === "events") && (
         <FlatList
           data={data}
           keyExtractor={(item) => item.id}
@@ -179,20 +242,32 @@ export default function Catalogue() {
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.card}
-              onPress={() => router.push({ pathname: `/${selectedCategory}/${item.id}`, params: item })}>
+              onPress={() => {
+                navigation.push("ViewLocation", item);
+                console.log(item);
+              }}
+            >
               <Image source={{ uri: item.image }} style={styles.image} />
               <Text style={styles.name}>{item.name}</Text>
               <View style={styles.detailsRow}>
-                <Text style={styles.detailText}>⭐ {item.popularity?.toFixed(1) || '4.0'}</Text>
-                <Text style={styles.detailText}>💰 {'$'.repeat(item.price || 2)}</Text>
+                <Text style={styles.detailText}>
+                  ⭐ {item.popularity?.toFixed(1) || "4.0"}
+                </Text>
+                <Text style={styles.detailText}>
+                  💰 {"$".repeat(item.price || 2)}
+                </Text>
               </View>
-              {selectedCategory === 'food' && (
+              {selectedCategory === "food" && (
                 <View>
                   <Text style={styles.info}>📍 {item.address}</Text>
-                  <Text style={styles.distanceText}>{item.distance} km away</Text>
+                  <Text style={styles.distanceText}>
+                    {item.distance} km away
+                  </Text>
                 </View>
               )}
-              {selectedCategory === 'events' && <Text style={styles.info}>📅 {item.date}</Text>}
+              {selectedCategory === "events" && (
+                <Text style={styles.info}>📅 {item.date}</Text>
+              )}
             </TouchableOpacity>
           )}
         />
@@ -202,23 +277,62 @@ export default function Catalogue() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  toggleContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 15 },
-  toggleButton: { flexDirection: 'row', alignItems: 'center', padding: 8, marginHorizontal: 5, borderRadius: 20, backgroundColor: '#eee' },
-  activeToggle: { backgroundColor: '#4a7cff' },
-  toggleText: { marginLeft: 5, color: 'gray' },
-  activeToggleText: { color: 'white' },
-  searchFilterRow: { flexDirection: 'row', marginBottom: 10 },
-  searchBar: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 10 },
-  pickerContainer: { width: 120, marginLeft: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 8 },
-  picker: { height: 40, width: '100%' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 10, color: '#666' },
-  card: { flex: 1, margin: 8, padding: 10, backgroundColor: '#f8f8f8', borderRadius: 10, alignItems: 'center' },
-  image: { width: '100%', height: 120, borderRadius: 10, marginBottom: 5 },
-  name: { fontWeight: 'bold', fontSize: 14, marginBottom: 4, textAlign: 'center' },
-  detailsRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%' },
-  detailText: { fontSize: 12, color: '#555' },
-  info: { fontSize: 12, color: 'gray', textAlign: 'center' },
-  distanceText: { fontSize: 11, color: '#888', textAlign: 'center' },
+  container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+  toggleContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 15,
+  },
+  toggleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 8,
+    marginHorizontal: 5,
+    borderRadius: 20,
+    backgroundColor: "#eee",
+  },
+  activeToggle: { backgroundColor: "#4a7cff" },
+  toggleText: { marginLeft: 5, color: "gray" },
+  activeToggleText: { color: "white" },
+  searchFilterRow: { flexDirection: "row", marginBottom: 10 },
+  searchBar: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+  },
+  pickerContainer: {
+    width: 120,
+    marginLeft: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+  },
+  picker: { height: 40, width: "100%" },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingText: { marginTop: 10, color: "#666" },
+  card: {
+    flex: 1,
+    margin: 8,
+    padding: 10,
+    backgroundColor: "#f8f8f8",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  image: { width: "100%", height: 120, borderRadius: 10, marginBottom: 5 },
+  name: {
+    fontWeight: "bold",
+    fontSize: 14,
+    marginBottom: 4,
+    textAlign: "center",
+  },
+  detailsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  detailText: { fontSize: 12, color: "#555" },
+  info: { fontSize: 12, color: "gray", textAlign: "center" },
+  distanceText: { fontSize: 11, color: "#888", textAlign: "center" },
 });
