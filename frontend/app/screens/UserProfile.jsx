@@ -81,7 +81,7 @@ const UserProfile = ({ navigation }) => {
 
   if (!isLoggedIn) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.notloggedInContainer}>
         <TouchableOpacity
           style={styles.loginButton}
           onPress={() => navigation.navigate("Login")}
@@ -139,6 +139,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: "#F5F5F5",
+  },
+  notloggedInContainer: {
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
