@@ -28,7 +28,7 @@ const getSavedLocationsById = async (req, res) => {
 }
 
 const getLocationsByUser = async (req, res) => {
-    const { user } = req.query;
+    const { email } = req.params;
 
     if (!user) {
         return res.status(400).json({ message: 'User not found' });
@@ -44,7 +44,8 @@ const getLocationsByUser = async (req, res) => {
 
 // Create a new Saved Location
 const saveLocation = async (req, res) => {
-    const { email, locationName, description, date, time } = req.body;
+    const { locationName, description, date, time } = req.body;
+    const { email } = req.params;
     try {
         const newLocation = await SavedLocationsModel.create({ email, locationName, description, date, time }); // Renamed variable to newLocation
         res.status(201).json(newLocation);
