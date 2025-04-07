@@ -15,6 +15,8 @@ import { Picker } from "@react-native-picker/picker";
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { API_BASE_URL } from "@env";
+import SharedData from "../SharedData";
+import EventBus from '../EventBus';
 
 // Dummy event data
 const eventData = [
@@ -37,37 +39,32 @@ export default function Catalogue({ navigation }) {
   const router = useRouter();
 
   useEffect(() => {
-    const getLocationAndRestaurants = async () => {
-      try {
-        setLoading(true);
-        let { status } = await Location.requestForegroundPermissionsAsync();
-
-        if (status !== "granted") {
-          console.log("Location permission denied, using fallback data");
-          setRestaurantData(fallbackRestaurantData);
-          setUsingFallbackData(true);
-          setLoading(false);
-          return;
-        }
-
-        let location = await Location.getCurrentPositionAsync({});
-        setUserLocation(location.coords);
-
-        if (location.coords) {
-          await fetchNearbyRestaurants(location.coords);
-        }
-      } catch (err) {
-        console.log("Location error:", err);
-        setRestaurantData(fallbackRestaurantData);
-        setUsingFallbackData(true);
-        setLoading(false);
+    const interval = setInterval(() => {
+      if (SharedData.consumeRefreshFlag()) {
+        const newPlaces = SharedData.getPlaces();
+        const newLoc = SharedData.getLastLocation();
+        console.log("🟡 Catalogue - App refreshed. Got", newPlaces.length, "places from SharedData");
+        setRestaurantData(newPlaces);
+        if (newLoc) setUserLocation(newLoc);
       }
-    };
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-    if (selectedCategory === "food") {
-      getLocationAndRestaurants();
-    }
-  }, [selectedCategory]);
+  useEffect(() => {
+    const refresh = () => {
+      const newPlaces = SharedData.getPlaces();
+      console.log("🟡 Catalogue - Received refresh event. Got", newPlaces.length, "places from SharedData");
+      setRestaurantData(newPlaces);
+      setUserLocation(SharedData.getLastLocation());
+    };
+  
+    EventBus.on('refreshCatalogue', refresh);
+  
+    return () => {
+      EventBus.off('refreshCatalogue', refresh);
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedCategory === "food" && userLocation && !usingFallbackData) {
@@ -78,6 +75,33 @@ export default function Catalogue({ navigation }) {
       return () => clearTimeout(delaySearch);
     }
   }, [searchQuery, selectedCategory, userLocation]);
+
+  const getLocationAndRestaurants = async () => {
+    try {
+      setLoading(true);
+      let { status } = await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        console.log("Location permission denied, using fallback data");
+        setRestaurantData(fallbackRestaurantData);
+        setUsingFallbackData(true);
+        setLoading(false);
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setUserLocation(location.coords);
+
+      if (location.coords) {
+        await fetchNearbyRestaurants(location.coords);
+      }
+    } catch (err) {
+      console.log("Location error:", err);
+      setRestaurantData(fallbackRestaurantData);
+      setUsingFallbackData(true);
+      setLoading(false);
+    }
+  };
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -127,6 +151,8 @@ export default function Catalogue({ navigation }) {
       }));
 
       setRestaurantData(mappedResults);
+      SharedData.setPlaces(mappedResults);
+      SharedData.setLastLocation(coords);
       setUsingFallbackData(false);
     } catch (err) {
       console.error("Error fetching from backend API:", err);

@@ -3,19 +3,15 @@ const eventbriteService = require('../service/EventBriteService');
 
 exports.getPlanData = async (req, res) => {
   try {
-    console.log("🔍 Request received for planner data");
-
-    const { latitude, longitude } = req.query;
+    const { latitude, longitude, bounds } = req.query;
 
     console.log("📍 Coordinates received:", latitude, longitude);
-    console.log("🔍 googlePlacesService =", googlePlacesService);
-    const foodPlaces = await googlePlacesService.getNearbyFood(latitude, longitude);
-    console.log("🔍 googlePlacesService =", googlePlacesService);
-    console.log("✅ Fetched food places");
+    if (bounds) {
+      console.log("🧭 Bounds received:", JSON.parse(bounds));
+    }
 
-    // const events = await eventbriteService.getNearbyEvents(latitude, longitude);
-    // console.log("✅ Fetched events");
-    
+    const foodPlaces = await googlePlacesService.getNearbyFood(latitude, longitude);
+
     res.json({
       foodPlaces,
       events: [],
