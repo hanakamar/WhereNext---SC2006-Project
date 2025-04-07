@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Button,
   Image,
+  Alert,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useRoute } from "@react-navigation/native";
@@ -38,6 +39,39 @@ export default function ViewLocation({ navigation }) {
     checkLoginStatus();
   }, []);
 
+  const savePlace = async (place) => {
+    if (!isLoggedIn) {
+      Alert.alert("Login Required", "You need to be logged in to save places.");
+      return;
+    }
+
+    const { id, name, description, coordinates, address, image } = {
+      id: place.id,
+      name: place.name,
+      description: place.description,
+      coordinates: { lat: place.lat, lng: place.lng },
+      address: place.address,
+      image: place.photoUrl,
+    };
+
+    const payload = {
+      id,
+      name,
+      description,
+      coordinates,
+      address,
+      image,
+    };
+
+    console.log("Saving place:", payload);
+    try {
+      await axios.post(`${API_BASE_URL}/api/bookmark/?email=${email}`, payload);
+      setSavedPlaces((prev) => [...prev, id]);
+    } catch (err) {
+      console.error("❌ Failed to save place:", err);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {image && <Image source={{ uri: image }} style={styles.image} />}
@@ -66,11 +100,7 @@ export default function ViewLocation({ navigation }) {
         <TouchableOpacity
           style={styles.saveButton}
           onPress={() => {
-            if (isLoggedIn) {
-              navigation.push("SaveLocation", item);
-            } else {
-              navigation.navigate("PleaseLoginPage");
-            }
+            savePlace(item);
           }}
         >
           <Text style={styles.saveButtonText}>Save to Planner</Text>

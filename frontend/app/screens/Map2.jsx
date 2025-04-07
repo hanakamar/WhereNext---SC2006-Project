@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from "react";
 import {
   StyleSheet,
   View,
@@ -9,16 +9,17 @@ import {
   Image,
   Dimensions,
   TouchableOpacity,
-} from 'react-native';
-import MapView, { Marker } from 'react-native-maps';
-import * as Location from 'expo-location';
-import axios from 'axios';
-import { API_BASE_URL } from '@env';
-import { setSearchResults } from '../SharedData'; // ✅ Add import for shared data
-import SharedData from '../SharedData';
-import EventBus from '../EventBus';
+} from "react-native";
+import MapView, { Marker } from "react-native-maps";
+import * as Location from "expo-location";
+import axios from "axios";
+import { API_BASE_URL } from "@env";
+import { setSearchResults } from "../SharedData"; // ✅ Add import for shared data
+import SharedData from "../SharedData";
+import EventBus from "../EventBus";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.7 + 16;
 
 export default function MApp() {
@@ -31,12 +32,14 @@ export default function MApp() {
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
   const mapRef = useRef(null);
   const scrollRef = useRef(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
+  const [email, setEmail] = useState(null); // State for user email
 
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Denied', 'Location permission is required.');
+      if (status !== "granted") {
+        Alert.alert("Permission Denied", "Location permission is required.");
         return;
       }
 
@@ -60,31 +63,68 @@ export default function MApp() {
     })();
   }, []);
 
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+      const userEmail = await AsyncStorage.getItem("userEmail");
+      setIsLoggedIn(loginStatus === "true");
+      setEmail(userEmail || ""); // Set the email state if it exists
+    };
+    checkLoginStatus();
+  }, []);
+
   const centerMapOnPlace = (lat, lng) => {
     if (mapRef.current) {
-      mapRef.current.animateToRegion({
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lng),
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      }, 1000);
+      mapRef.current.animateToRegion(
+        {
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng),
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        },
+        1000
+      );
     }
   };
 
   const handleMarkerPress = (placeId) => {
     setSelectedPlaceId(placeId);
-    const index = foodPlaces.findIndex(p => p.id === placeId);
+    const index = foodPlaces.findIndex((p) => p.id === placeId);
     if (scrollRef.current && index !== -1) {
       scrollRef.current.scrollTo({ x: index * CARD_WIDTH, animated: true });
     }
   };
 
   const savePlace = async (place) => {
+    if (!isLoggedIn) {
+      Alert.alert("Login Required", "You need to be logged in to save places.");
+      return;
+    }
+
+    const { id, name, description, coordinates, address, image } = {
+      id: place.id,
+      name: place.name,
+      description: place.description,
+      coordinates: { lat: place.lat, lng: place.lng },
+      address: place.address,
+      image: place.photoUrl,
+    };
+
+    const payload = {
+      id,
+      name,
+      description,
+      coordinates,
+      address,
+      image,
+    };
+
+    console.log("Saving place:", payload);
     try {
-      await axios.post(`${API_BASE_URL}/api/save`, place);
-      setSavedPlaces(prev => [...prev, place.id]);
+      await axios.post(`${API_BASE_URL}/api/bookmark/?email=${email}`, payload);
+      setSavedPlaces((prev) => [...prev, id]);
     } catch (err) {
-      console.error('❌ Failed to save place:', err);
+      console.error("❌ Failed to save place:", err);
     }
   };
 
@@ -95,7 +135,7 @@ export default function MApp() {
       east: reg.longitude + reg.longitudeDelta / 2,
       west: reg.longitude - reg.longitudeDelta / 2,
     };
-  
+
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/api/planner`, {
@@ -105,26 +145,32 @@ export default function MApp() {
           bounds: JSON.stringify(bounds),
         },
       });
-  
+
       const rawPlaces = response.data.foodPlaces;
       setFoodPlaces(rawPlaces); // ✅ Keep original structure for Map2
-  
+
       // ✅ Map full structure for catalogue
       const mappedResults = rawPlaces.map((place, index) => ({
         id: place.id || `place_${index}`,
         name: place.name,
         address: place.address,
-        image: place.photoUrl || "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+        image:
+          place.photoUrl ||
+          "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
         description: place.type === "cafe" ? "Cafe" : "Restaurant",
         distance: 0,
         popularity: place.rating || 4.0,
         price: place.priceLevel || 2,
       }));
-  
-      console.log("✅ Map2 - SharedData updated with:", mappedResults.length, "places");
+
+      console.log(
+        "✅ Map2 - SharedData updated with:",
+        mappedResults.length,
+        "places"
+      );
       SharedData.setPlaces(mappedResults);
       SharedData.setLastLocation(reg);
-      EventBus.emit('refreshCatalogue');
+      EventBus.emit("refreshCatalogue");
     } catch (error) {
       console.error("❌ Error refreshing data:", error);
       Alert.alert("Error", "Failed to refresh area data.");
@@ -136,12 +182,12 @@ export default function MApp() {
   const handleSearchArea = async () => {
     if (region) {
       const data = await fetchFoodPlaces(region); // make fetchFoodPlaces return mappedResults
-    SharedData.setPlaces(data);
-    SharedData.setLastLocation(region);
-    console.log("✅ Map2 - SharedData updated with:", data.length, "places");
+      SharedData.setPlaces(data);
+      SharedData.setLastLocation(region);
+      console.log("✅ Map2 - SharedData updated with:", data.length, "places");
 
-    EventBus.emit('refreshCatalogue');
-  }
+      EventBus.emit("refreshCatalogue");
+    }
   };
 
   if (loading || !location || !region) {
@@ -165,27 +211,32 @@ export default function MApp() {
         }}
         showsUserLocation
       >
-        {Array.isArray(foodPlaces) && foodPlaces.map(place => (
-          <Marker
-          key={`food-${place.id}`}
-          coordinate={{
-            latitude: parseFloat(place.lat),
-            longitude: parseFloat(place.lng),
-          }}
-          title={place.name}
-          description={place.address}
-          pinColor={selectedPlaceId === place.id ? 'dodgerblue' : 'orange'}
-          onPress={() => handleMarkerPress(place.id)}
-        />
-        ))}
+        {Array.isArray(foodPlaces) &&
+          foodPlaces.map((place) => (
+            <Marker
+              key={`food-${place.id}`}
+              coordinate={{
+                latitude: parseFloat(place.lat),
+                longitude: parseFloat(place.lng),
+              }}
+              title={place.name}
+              description={place.address}
+              pinColor={selectedPlaceId === place.id ? "dodgerblue" : "orange"}
+              onPress={() => handleMarkerPress(place.id)}
+            />
+          ))}
       </MapView>
 
-      <View style={[styles.bottomButtonGroup, { bottom: showPlaceList ? 310 : 20 }]}>
+      <View
+        style={[styles.bottomButtonGroup, { bottom: showPlaceList ? 310 : 20 }]}
+      >
         <TouchableOpacity
           style={styles.toggleButton}
           onPress={() => setShowPlaceList(!showPlaceList)}
         >
-          <Text style={styles.toggleButtonText}>{showPlaceList ? '↓' : '↑'}</Text>
+          <Text style={styles.toggleButtonText}>
+            {showPlaceList ? "↓" : "↑"}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -203,12 +254,13 @@ export default function MApp() {
             horizontal
             showsHorizontalScrollIndicator={false}
           >
-            {foodPlaces.map(place => (
+            {foodPlaces.map((place) => (
               <TouchableOpacity
                 key={place.id}
                 onPress={() => {
                   setSelectedPlaceId(place.id);
-                  centerMapOnPlace(place.lat, place.lng);}}
+                  centerMapOnPlace(place.lat, place.lng);
+                }}
                 style={[
                   styles.card,
                   selectedPlaceId === place.id && styles.selectedCard,
@@ -216,7 +268,10 @@ export default function MApp() {
                 activeOpacity={0.9}
               >
                 {place.photoUrl ? (
-                  <Image source={{ uri: place.photoUrl }} style={styles.image} />
+                  <Image
+                    source={{ uri: place.photoUrl }}
+                    style={styles.image}
+                  />
                 ) : (
                   <View style={[styles.image, styles.imagePlaceholder]}>
                     <Text style={styles.imagePlaceholderText}>No Image</Text>
@@ -225,14 +280,16 @@ export default function MApp() {
                 <Text style={styles.name}>{place.name}</Text>
                 <Text style={styles.address}>{place.address}</Text>
                 {place.rating && (
-                  <Text style={styles.ratingText}>⭐ {place.rating} ({place.totalRatings})</Text>
+                  <Text style={styles.ratingText}>
+                    ⭐ {place.rating} ({place.totalRatings})
+                  </Text>
                 )}
                 <TouchableOpacity
                   style={styles.saveButton}
                   onPress={() => savePlace(place)}
                 >
                   <Text style={styles.saveButtonText}>
-                    {savedPlaces.includes(place.id) ? 'Saved' : 'Save'}
+                    {savedPlaces.includes(place.id) ? "Saved" : "Save"}
                   </Text>
                 </TouchableOpacity>
               </TouchableOpacity>
@@ -249,16 +306,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   map: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   centered: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   toggleButton: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     padding: 8,
     borderRadius: 20,
     elevation: 5,
@@ -266,46 +323,46 @@ const styles = StyleSheet.create({
   },
   toggleButtonText: {
     fontSize: 24,
-    color: '#333',
+    color: "#333",
   },
   bottomButtonGroup: {
-    position: 'absolute',
-    alignSelf: 'center',
-    flexDirection: 'row',
+    position: "absolute",
+    alignSelf: "center",
+    flexDirection: "row",
     zIndex: 10,
   },
   searchButton: {
-    backgroundColor: '#1976d2',
+    backgroundColor: "#1976d2",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 20,
     marginHorizontal: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   searchButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
   placeListContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 10,
     paddingVertical: 10,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     marginHorizontal: 8,
     padding: 10,
     borderRadius: 12,
     width: width * 0.7,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 6,
     elevation: 3,
   },
   selectedCard: {
     borderWidth: 2,
-    borderColor: '#ff9800',
+    borderColor: "#ff9800",
   },
   image: {
     height: 100,
@@ -313,37 +370,37 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   imagePlaceholder: {
-    backgroundColor: '#eee',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#eee",
+    justifyContent: "center",
+    alignItems: "center",
   },
   imagePlaceholderText: {
-    color: '#999',
+    color: "#999",
     fontSize: 12,
   },
   name: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 16,
   },
   address: {
-    color: '#666',
+    color: "#666",
     fontSize: 13,
     marginBottom: 4,
   },
   ratingText: {
     fontSize: 13,
-    color: '#444',
+    color: "#444",
     marginBottom: 4,
   },
   saveButton: {
     marginTop: 4,
     paddingVertical: 6,
-    backgroundColor: '#4caf50',
+    backgroundColor: "#4caf50",
     borderRadius: 8,
-    alignItems: 'center',
+    alignItems: "center",
   },
   saveButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
   },
 });
