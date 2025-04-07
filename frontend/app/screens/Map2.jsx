@@ -260,6 +260,7 @@ export default function MApp() {
                 onPress={() => {
                   setSelectedPlaceId(place.id);
                   centerMapOnPlace(place.lat, place.lng);
+                  handleMarkerPress(place.id);
                 }}
                 style={[
                   styles.card,

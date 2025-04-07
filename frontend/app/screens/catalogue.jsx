@@ -165,18 +165,21 @@ export default function Catalogue({ navigation }) {
     }
   };
 
-  let data = selectedCategory === "food" ? [...restaurantData] : [...eventData];
-
-  if (selectedCategory === "events") {
-    data = data.filter((item) =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Apply search to both categories
+  let data = selectedCategory === 'food' ? [...restaurantData] : [...eventData];
+  
+  // Apply search filter to both categories
+  if (searchQuery.trim() !== '') {
+    data = data.filter(item => 
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (item.address && item.address.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }
 
+  // Apply sorting
   data.sort((a, b) => {
-    if (sortOption === "distance") return a.distance - b.distance;
-    if (sortOption === "popularity") return b.popularity - a.popularity;
-    if (sortOption === "price") return a.price - b.price;
+    if (sortOption === 'distance') return a.distance - b.distance;
+    if (sortOption === 'popularity') return b.popularity - a.popularity;
     return 0;
   });
 
@@ -244,7 +247,6 @@ export default function Catalogue({ navigation }) {
           >
             <Picker.Item label="Distance" value="distance" />
             <Picker.Item label="Popularity" value="popularity" />
-            <Picker.Item label="Price" value="price" />
           </Picker>
         </View>
       </View>
@@ -277,10 +279,7 @@ export default function Catalogue({ navigation }) {
               <Text style={styles.name}>{item.name}</Text>
               <View style={styles.detailsRow}>
                 <Text style={styles.detailText}>
-                  ⭐ {item.popularity?.toFixed(1) || "4.0"}
-                </Text>
-                <Text style={styles.detailText}>
-                  💰 {"$".repeat(item.price || 2)}
+                  ⭐ {item.popularity?.toFixed(1) || "NA"}
                 </Text>
               </View>
               {selectedCategory === "food" && (
