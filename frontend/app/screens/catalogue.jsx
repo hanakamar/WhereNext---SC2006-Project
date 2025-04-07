@@ -133,7 +133,6 @@ export default function Catalogue() {
   data.sort((a, b) => {
     if (sortOption === 'distance') return a.distance - b.distance;
     if (sortOption === 'popularity') return b.popularity - a.popularity;
-    // Removed price sorting as requested
     return 0;
   });
 
@@ -210,7 +209,6 @@ export default function Catalogue() {
                 <Text style={styles.name}>{item.name}</Text>
                 <View style={styles.detailsRow}>
                   <Text style={styles.detailText}>⭐ {item.popularity?.toFixed(1) || '4.0'}</Text>
-                  {/* Removed price display as requested */}
                 </View>
                 {selectedCategory === 'food' && (
                   <View>
