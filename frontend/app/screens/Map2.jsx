@@ -14,6 +14,9 @@ import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import axios from 'axios';
 import { API_BASE_URL } from '@env';
+import { setSearchResults } from '../SharedData'; // ✅ Add import for shared data
+import SharedData from '../SharedData';
+import EventBus from '../EventBus';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.7 + 16;
@@ -47,6 +50,13 @@ export default function MApp() {
       };
       setRegion(initialRegion);
       fetchFoodPlaces(initialRegion);
+      console.log("🗺️ Fetching for region:", reg);
+      console.log("🧭 Bounds being sent:", {
+        north: reg.latitude + reg.latitudeDelta / 2,
+        south: reg.latitude - reg.latitudeDelta / 2,
+        east: reg.longitude + reg.longitudeDelta / 2,
+        west: reg.longitude - reg.longitudeDelta / 2,
+      });
     })();
   }, []);
 
@@ -85,7 +95,7 @@ export default function MApp() {
       east: reg.longitude + reg.longitudeDelta / 2,
       west: reg.longitude - reg.longitudeDelta / 2,
     };
-
+  
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/api/planner`, {
@@ -95,10 +105,29 @@ export default function MApp() {
           bounds: JSON.stringify(bounds),
         },
       });
-      setFoodPlaces(response.data.foodPlaces);
+  
+      const rawPlaces = response.data.foodPlaces;
+      setFoodPlaces(rawPlaces); // ✅ Keep original structure for Map2
+  
+      // ✅ Map full structure for catalogue
+      const mappedResults = rawPlaces.map((place, index) => ({
+        id: place.id || `place_${index}`,
+        name: place.name,
+        address: place.address,
+        image: place.photoUrl || "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+        description: place.type === "cafe" ? "Cafe" : "Restaurant",
+        distance: 0,
+        popularity: place.rating || 4.0,
+        price: place.priceLevel || 2,
+      }));
+  
+      console.log("✅ Map2 - SharedData updated with:", mappedResults.length, "places");
+      SharedData.setPlaces(mappedResults);
+      SharedData.setLastLocation(reg);
+      EventBus.emit('refreshCatalogue');
     } catch (error) {
-      console.error('❌ Error refreshing data:', error);
-      Alert.alert('Error', 'Failed to refresh area data.');
+      console.error("❌ Error refreshing data:", error);
+      Alert.alert("Error", "Failed to refresh area data.");
     } finally {
       setLoading(false);
     }
@@ -106,8 +135,13 @@ export default function MApp() {
 
   const handleSearchArea = async () => {
     if (region) {
-      fetchFoodPlaces(region);
-    }
+      const data = await fetchFoodPlaces(region); // make fetchFoodPlaces return mappedResults
+    SharedData.setPlaces(data);
+    SharedData.setLastLocation(region);
+    console.log("✅ Map2 - SharedData updated with:", data.length, "places");
+
+    EventBus.emit('refreshCatalogue');
+  }
   };
 
   if (loading || !location || !region) {
@@ -125,7 +159,10 @@ export default function MApp() {
         ref={mapRef}
         style={styles.map}
         initialRegion={region}
-        onRegionChangeComplete={setRegion}
+        onRegionChangeComplete={(newRegion) => {
+          console.log("📍 Region changed to:", newRegion);
+          setRegion(newRegion);
+        }}
         showsUserLocation
       >
         {Array.isArray(foodPlaces) && foodPlaces.map(place => (
@@ -137,8 +174,8 @@ export default function MApp() {
           }}
           title={place.name}
           description={place.address}
-          pinColor={selectedPlaceId === place.id ? 'dodgerblue' : 'orange'} // ✅ Change color
-          onPress={() => handleMarkerPress(place.id)} // ✅ Scroll and highlight from pin
+          pinColor={selectedPlaceId === place.id ? 'dodgerblue' : 'orange'}
+          onPress={() => handleMarkerPress(place.id)}
         />
         ))}
       </MapView>
@@ -171,8 +208,7 @@ export default function MApp() {
                 key={place.id}
                 onPress={() => {
                   setSelectedPlaceId(place.id);
-                  centerMapOnPlace(place.lat, place.lng);
-                  handleMarkerPress(place.id);}}
+                  centerMapOnPlace(place.lat, place.lng);}}
                 style={[
                   styles.card,
                   selectedPlaceId === place.id && styles.selectedCard,

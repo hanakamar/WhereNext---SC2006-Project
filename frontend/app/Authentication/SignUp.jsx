@@ -74,17 +74,18 @@ const SignUp = ({ navigation }) => {
       return;
     }
     const userData = {
-      name,
       email,
       password,
+      name,
       country: "Singapore",
     };
+    console.log(`${config.API_URL}/profile/signup`);
+    console.log("User Data:", userData);
 
-    console.log("Signing up with:", { name, email });
     {
       /* Add backend authentication logic here; i think we can use this in other sections too fernando*/
       axios
-        .post(`${config.API_URL}/profile/signup`, userData)
+        .post(`${config.API_URL}/api/profile/signup`, userData)
         .then((res) => {
           console.log(res.data);
           if (res.data.status === "ok") {
@@ -117,10 +118,10 @@ const SignUp = ({ navigation }) => {
                 error.response.data.message || "Username or name already in use"
               );
             } else {
-              Alert.alert("Error", "An unexpected error occurred");
+              Alert.alert("Error", error.message);
             }
           } else {
-            Alert.alert("Error", "An unexpected error occurred");
+            Alert.alert("Error", error.message);
           }
         });
     }

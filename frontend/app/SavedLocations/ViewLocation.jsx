@@ -10,23 +10,39 @@ import {
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect } from "react";
 
 export default function ViewLocation({ navigation }) {
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
   const router = useRouter();
   const route = useRoute();
-  const { name, location, description, email, image } = route.params || {};
+  const { name, address, description, image, popularity, price } =
+    route.params || {};
 
   const [eventName] = useState(name);
-  const [loc] = useState(location);
+  const [loc] = useState(address);
   const [desc] = useState(description);
+  const [ppopularity] = useState(popularity);
+  const [pprice] = useState(price);
 
-  const item = { name, location, description, email, image };
+  const item = { name, address, description, image, popularity, price };
+
+  useEffect(() => {
+    // Check if the user is logged in
+    const checkLoginStatus = async () => {
+      const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+      setIsLoggedIn(loginStatus === "true");
+    };
+
+    checkLoginStatus();
+  }, []);
 
   return (
     <View style={styles.container}>
       {image && <Image source={{ uri: image }} style={styles.image} />}
       <View style={styles.infoContainer}>
-        <Text style={styles.label}>Event Name</Text>
+        <Text style={styles.label}>Name</Text>
         <Text style={styles.value}>{eventName}</Text>
       </View>
       <View style={styles.infoContainer}>
@@ -37,14 +53,34 @@ export default function ViewLocation({ navigation }) {
         <Text style={styles.label}>Description</Text>
         <Text style={styles.value}>{desc}</Text>
       </View>
+      <View style={styles.infoContainer}>
+        <Text style={styles.label}>Popularity</Text>
+        <Text style={styles.value}>{ppopularity}</Text>
+      </View>
+      <View style={styles.infoContainer}>
+        <Text style={styles.label}>Price</Text>
+        <Text style={styles.value}>{pprice}</Text>
+      </View>
 
       <View style={styles.buttonContainer}>
-        <Button
-          title="Save to Planner"
+        <TouchableOpacity
+          style={styles.saveButton}
           onPress={() => {
-            navigation.push("SaveLocation", item);
+            if (isLoggedIn) {
+              navigation.push("SaveLocation", item);
+            } else {
+              navigation.navigate("PleaseLoginPage");
+            }
           }}
-        />
+        >
+          <Text style={styles.saveButtonText}>Save to Planner</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>Back</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -93,9 +129,30 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   buttonContainer: {
-    marginTop: 20,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  cancelButton: {
-    marginTop: 5, // Adds 5 units of margin below the Save button
+  saveButton: {
+    backgroundColor: "#007BFF",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    marginBottom: 20,
+  },
+  saveButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    textAlign: "center",
+  },
+  backButton: {
+    backgroundColor: "#FF0000",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+  },
+  backButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    textAlign: "center",
   },
 });

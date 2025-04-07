@@ -21,7 +21,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/api/listing', savedlocationsRoutes);
+app.use('/api/savedLocations', savedlocationsRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/planner', plannerRoutes);
 

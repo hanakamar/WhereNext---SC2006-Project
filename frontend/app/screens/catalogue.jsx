@@ -102,6 +102,7 @@ export default function Catalogue() {
         description: place.type === 'cafe' ? 'Cafe' : 'Restaurant',
         distance: calculateDistance(coords.latitude, coords.longitude, place.lat, place.lng),
         popularity: place.rating || 4.0,
+        // Removed price property as requested
       }));
 
       setRestaurantData(mappedResults);
@@ -132,6 +133,7 @@ export default function Catalogue() {
   data.sort((a, b) => {
     if (sortOption === 'distance') return a.distance - b.distance;
     if (sortOption === 'popularity') return b.popularity - a.popularity;
+    // Removed price sorting as requested
     return 0;
   });
 
@@ -201,13 +203,14 @@ export default function Catalogue() {
                   pathname: `/food_catalogue/${item.id}`,
                   params: {
                     ...item,
-                    backRoute: '/screens/catalogue'
+                    backRoute: '/screens/catalogue'  // Add back route for navigation
                   }
                 })}>
                 <Image source={{ uri: item.image }} style={styles.image} />
                 <Text style={styles.name}>{item.name}</Text>
                 <View style={styles.detailsRow}>
                   <Text style={styles.detailText}>⭐ {item.popularity?.toFixed(1) || '4.0'}</Text>
+                  {/* Removed price display as requested */}
                 </View>
                 {selectedCategory === 'food' && (
                   <View>
@@ -278,9 +281,7 @@ const styles = StyleSheet.create({
   },
   searchFilterRow: { 
     flexDirection: 'row', 
-    marginBottom: 10,
-    zIndex: 10,  // Ensure this row is above other content
-    position: 'relative',  // Position relative to manage z-index
+    marginBottom: 10 
   },
   searchBar: { 
     flex: 1, 
@@ -295,9 +296,7 @@ const styles = StyleSheet.create({
     marginLeft: 10, 
     borderWidth: 1, 
     borderColor: '#ccc', 
-    borderRadius: 8,
-    zIndex: 20,  // Make sure this is on top of other elements
-    position: 'relative', // Ensure it's properly positioned above other components
+    borderRadius: 8 
   },
   picker: { 
     height: 40, 
@@ -322,7 +321,7 @@ const styles = StyleSheet.create({
   },
   image: { 
     width: '100%', 
-    height: 120, 
+    height: 120, // Fixed height value instead of using APPLICATION_CONFIG
     borderRadius: 10, 
     marginBottom: 5 
   },
@@ -334,7 +333,7 @@ const styles = StyleSheet.create({
   },
   detailsRow: { 
     flexDirection: 'row', 
-    justifyContent: 'center', 
+    justifyContent: 'center', // Changed from space-between since we only have one item now
     width: '100%' 
   },
   detailText: { 
@@ -352,4 +351,3 @@ const styles = StyleSheet.create({
     textAlign: 'center' 
   },
 });
-
