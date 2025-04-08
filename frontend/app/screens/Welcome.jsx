@@ -3,23 +3,18 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
 import { commonStyles } from "../styles/commonStyleSheet";
-import { Link, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Welcome({ navigation }) {
-  const handleNavigate = () => {
-    const handleSkip = async () => {
-      try {
-        await AsyncStorage.clear();
-        console.log("AsyncStorage cleared!");
-      } catch (e) {
-        console.error("Failed to clear AsyncStorage:", e);
-      }
-    };
-    handleSkip();
+  const handleNavigate = async () => {
+    try {
+      await AsyncStorage.clear();
+      console.log("AsyncStorage cleared!");
+    } catch (e) {
+      console.error("Failed to clear AsyncStorage:", e);
+    }
     navigation.navigate("Main"); // Navigate to the main app
   };
-  const router = useRouter();
 
   return (
     <View style={[commonStyles.container, styles.welcomeContainer]}>
@@ -30,9 +25,6 @@ export default function Welcome({ navigation }) {
       <View style={styles.logoContainer}>
         <Text style={styles.logoText}>WhereNext?</Text>
         <Text style={styles.tagline}>Plan and visualize your day</Text>
-        {/*
-        <Text style = {[styles.tagline, {padding : 10} ]}>Login or signup now </Text>
-        */}
       </View>
 
       <View style={styles.buttonContainer}>
@@ -45,21 +37,12 @@ export default function Welcome({ navigation }) {
 
         <TouchableOpacity
           style={[commonStyles.button, styles.button, styles.signUpButton]}
-          onPress={() => router.push("../Authentication/SignUp")}
+          onPress={() => navigation.navigate("SignUp")}
         >
           <Text style={[commonStyles.buttonText, styles.signUpText]}>
             Sign Up
           </Text>
         </TouchableOpacity>
-
-        {/*}
-        <TouchableOpacity 
-          style={styles.skipButton}
-          onPress={() =>router.push('Home')}
-        >
-          <Text style={styles.skipText}>Skip for now</Text>
-        </TouchableOpacity>
-        */}
       </View>
     </View>
   );
@@ -72,8 +55,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logoContainer: {
-    //flex: 1,
-    //justifyContent: 'center',
     alignItems: "center",
     marginBottom: 90,
   },

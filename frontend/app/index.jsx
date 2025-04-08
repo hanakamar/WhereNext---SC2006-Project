@@ -20,6 +20,9 @@ import UpdateDetails from "./UserProfile/UpdateDetails";
 import SignUp from "./Authentication/SignUp";
 import PleaseLoginPage from "./screens/PleaseLoginPage";
 import SavedLibraries from "./SavedLibraries/SavedLibraries";
+import VerifyEmail from "./Authentication/VerifyEmail";
+import ForgotPassword from "./Authentication/ForgotPassword";
+import ResetPassword from "./Authentication/ResetPassword";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -123,6 +126,21 @@ function AppNavigator() {
       <Stack.Screen
         name="SignUp"
         component={SignUp}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="VerifyEmail"
+        component={VerifyEmail}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ForgotPassword"
+        component={ForgotPassword}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="ResetPassword"
+        component={ResetPassword}
         options={{ headerShown: false }}
       />
       <Stack.Screen

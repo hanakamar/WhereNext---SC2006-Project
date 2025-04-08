@@ -1,13 +1,3 @@
-/*
-import { View, Text } from "react-native";
-export default function Signup() {
-  return (
-    <View>
-      <Text>Signup Page</Text>
-    </View>
-  );
-}
-*/
 import axios from "axios";
 import config from "../../config";
 import React, { useState } from "react";
@@ -16,7 +6,6 @@ import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
 import BackButton from "../components/BackButton";
 import { commonStyles } from "../styles/commonStyleSheet";
-import { Link, useRouter } from "expo-router";
 
 const SignUp = ({ navigation }) => {
   const [name, setName] = useState("");
@@ -25,7 +14,7 @@ const SignUp = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(null);
-  const router = useRouter();
+
   const clearMessage = () => {
     setTimeout(() => {
       setMessage("");
@@ -41,8 +30,6 @@ const SignUp = ({ navigation }) => {
       return;
     }
 
-    // appropriate email id verification
-    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!email.endsWith("@gmail.com")) {
       setMessage("Please enter a valid email address.");
       setMessageType("error");
@@ -57,7 +44,6 @@ const SignUp = ({ navigation }) => {
       return;
     }
 
-    // Password strength validation
     let strength = 0;
     if (password.length >= 10) strength++;
     if (/[a-z]/.test(password)) strength++;
@@ -73,58 +59,49 @@ const SignUp = ({ navigation }) => {
       clearMessage();
       return;
     }
+
     const userData = {
       email,
       password,
       name,
       country: "Singapore",
     };
-    console.log(`${config.API_URL}/profile/signup`);
-    console.log("User Data:", userData);
 
-    {
-      /* Add backend authentication logic here; i think we can use this in other sections too fernando*/
-      axios
-        .post(`${config.API_URL}/api/profile/signup`, userData)
-        .then((res) => {
-          console.log(res.data);
-          if (res.data.status === "ok") {
-            console.log("OK!");
-            Alert.alert("Success", "Registered Successfully", [
-              {
-                text: "OK",
-                onPress: () =>
-                  router.push({
-                    pathname: "./VerifyEmail",
-                    params: { from: "SignUp" },
-                  }),
+    axios
+      .post(`${config.API_URL}/api/profile/signup`, userData)
+      .then((res) => {
+        if (res.data.status === "ok") {
+          Alert.alert("Success", "Registered Successfully", [
+            {
+              text: "OK",
+              onPress: () => {
+                navigation.navigate("VerifyEmail"), { from: "SignUp" };
               },
-            ]);
-          } else {
-            Alert.alert("Error", res.data.message || "Unexpected error");
-          }
-        })
-        .catch((error) => {
-          console.log("Error:", error);
-          if (error.response) {
-            if (error.response.status === 400) {
-              Alert.alert(
-                "Error",
-                error.response.data.message || "All fields must be filled"
-              );
-            } else if (error.response.status === 409) {
-              Alert.alert(
-                "Error",
-                error.response.data.message || "Username or name already in use"
-              );
-            } else {
-              Alert.alert("Error", error.message);
-            }
+            },
+          ]);
+        } else {
+          Alert.alert("Error", res.data.message || "Unexpected error");
+        }
+      })
+      .catch((error) => {
+        if (error.response) {
+          if (error.response.status === 400) {
+            Alert.alert(
+              "Error",
+              error.response.data.message || "All fields must be filled"
+            );
+          } else if (error.response.status === 409) {
+            Alert.alert(
+              "Error",
+              error.response.data.message || "Username or name already in use"
+            );
           } else {
             Alert.alert("Error", error.message);
           }
-        });
-    }
+        } else {
+          Alert.alert("Error", error.message);
+        }
+      });
   };
 
   return (
@@ -171,12 +148,9 @@ const SignUp = ({ navigation }) => {
 
       <View style={styles.footerContainer}>
         <Text style={styles.footerText}>Already have an account? </Text>
-        <Link href="./Login" style={styles.loginLink}>
-          Login
-        </Link>
-        {/* <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <TouchableOpacity onPress={() => navigation.navigate("Login")}>
           <Text style={styles.loginLink}>Login</Text>
-        </TouchableOpacity> */}
+        </TouchableOpacity>
       </View>
     </View>
   );

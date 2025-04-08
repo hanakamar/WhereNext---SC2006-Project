@@ -4,14 +4,16 @@ import CustomInput from "../components/CustomInput";
 import CustomButton from "../components/CustomButton";
 import BackButton from "../components/BackButton";
 import { commonStyles } from "../styles/commonStyleSheet";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
+import { useRoute } from "@react-navigation/native";
 
-const VerifyEmail = () => {
+const VerifyEmail = ({ navigation }) => {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState(null);
   const router = useRouter();
-  const { from } = useLocalSearchParams();
+  const route = useRoute(); // Get the route object
+  const { from } = route.params || {}; // Get the 'from' parameter from the route
 
   const clearMessage = () => {
     setTimeout(() => {
@@ -30,10 +32,10 @@ const VerifyEmail = () => {
       setMessageType("success");
       clearMessage();
       setTimeout(() => {
-        if (from === "SignUp") {
-          router.push("/Authentication/Login");
-        } else if (from === "ForgotPassword") {
-          router.push("/Authentication/ResetPassword");
+        if (from !== "ForgotPassword") {
+          navigation.navigate("Login");
+        } else {
+          navigation.navigate("ResetPassword");
         }
       }, 1000);
     } else {

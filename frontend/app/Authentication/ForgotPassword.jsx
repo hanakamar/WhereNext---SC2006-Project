@@ -6,7 +6,7 @@ import BackButton from "../components/BackButton";
 import { commonStyles } from "../styles/commonStyleSheet";
 import { Link, useRouter } from "expo-router";
 
-const ForgotPassword = () => {
+const ForgotPassword = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState(""); // email sent/ not sent
   const [messageType, setMessageType] = useState(null); // sucess -> green if not error-> red
@@ -30,10 +30,7 @@ const ForgotPassword = () => {
 
     // goes to verifyemail after a short delay 1000ms or 1 second
     setTimeout(() => {
-      router.push({
-        pathname: "./VerifyEmail",
-        params: { from: "ForgotPassword" },
-      });
+      navigation.navigate("VerifyEmail", { from: "ForgotPassword" });
     }, 1000);
   };
 
