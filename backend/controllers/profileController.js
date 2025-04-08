@@ -65,6 +65,7 @@ const updatePassword = async (req, res) => {
 // Get All Profile (LoginUser)
 const getProfileById = async (req, res) => {
     const { email } = req.query;
+    console.log("Email from query:", email); // Log the email for debugging
 
     if (!email) {
         return res.status(400).json({ message: 'Email query parameter is required' });

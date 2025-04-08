@@ -8,6 +8,9 @@ const app = express();
 const savedlocationsRoutes = require('./routes/savedlocations');
 const profileRoutes = require('./routes/profile');
 const plannerRoutes = require('./routes/plannerRoutes');
+const bookmarkRoutes = require('./routes/bookmarkRoutes');
+
+const savedPlacesRoutes = require("./routes/savedPlacesRoutes");
 const { default: mongoose } = require('mongoose');
 
 app.use(express.json());
@@ -24,6 +27,8 @@ app.use((req, res, next) => {
 app.use('/api/savedLocations', savedlocationsRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/planner', plannerRoutes);
+app.use('/api/bookmark', bookmarkRoutes);
+app.use('/api/saved', savedPlacesRoutes);
 
 // Connect to MongoDB
 console.log("🔌 Connecting to MongoDB...");
