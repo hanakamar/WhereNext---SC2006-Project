@@ -66,6 +66,8 @@ export default function Catalogue({ navigation }) {
     };
   }, []);
 
+
+  //Should replace with a error message not logged in
   useEffect(() => {
     if (selectedCategory === "food" && userLocation && !usingFallbackData) {
       const delaySearch = setTimeout(() => {
@@ -76,32 +78,7 @@ export default function Catalogue({ navigation }) {
     }
   }, [searchQuery, selectedCategory, userLocation]);
 
-  const getLocationAndRestaurants = async () => {
-    try {
-      setLoading(true);
-      let { status } = await Location.requestForegroundPermissionsAsync();
-
-      if (status !== "granted") {
-        console.log("Location permission denied, using fallback data");
-        setRestaurantData(fallbackRestaurantData);
-        setUsingFallbackData(true);
-        setLoading(false);
-        return;
-      }
-
-      let location = await Location.getCurrentPositionAsync({});
-      setUserLocation(location.coords);
-
-      if (location.coords) {
-        await fetchNearbyRestaurants(location.coords);
-      }
-    } catch (err) {
-      console.log("Location error:", err);
-      setRestaurantData(fallbackRestaurantData);
-      setUsingFallbackData(true);
-      setLoading(false);
-    }
-  };
+  
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -136,8 +113,7 @@ export default function Catalogue({ navigation }) {
         id: place.id || `place_${index}`,
         name: place.name,
         address: place.address,
-        image:
-          place.photoUrl ||
+        photoUrl: place.photoUrl ||
           "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
         description: place.type === "cafe" ? "Cafe" : "Restaurant",
         distance: calculateDistance(
@@ -146,9 +122,13 @@ export default function Catalogue({ navigation }) {
           place.lat,
           place.lng
         ),
-        popularity: place.rating || 4.0,
-        price: place.priceLevel || 2,
+        rating: place.rating || 4.0,
+        totalRatings: place.totalRatings || 0,
+        lat: place.lat,  // ✅ Include
+        lng: place.lng,  // ✅ Include
+        type: place.type , // ✅ Include
       }));
+      
 
       setRestaurantData(mappedResults);
       SharedData.setPlaces(mappedResults);
@@ -179,7 +159,7 @@ export default function Catalogue({ navigation }) {
   // Apply sorting
   data.sort((a, b) => {
     if (sortOption === 'distance') return a.distance - b.distance;
-    if (sortOption === 'popularity') return b.popularity - a.popularity;
+    if (sortOption === 'rating') return b.rating - a.rating;
     return 0;
   });
 
@@ -246,7 +226,7 @@ export default function Catalogue({ navigation }) {
             style={styles.picker}
           >
             <Picker.Item label="Distance" value="distance" />
-            <Picker.Item label="Popularity" value="popularity" />
+            <Picker.Item label="Rating" value="rating" />
           </Picker>
         </View>
       </View>
@@ -271,15 +251,36 @@ export default function Catalogue({ navigation }) {
             <TouchableOpacity
               style={styles.card}
               onPress={() => {
-                navigation.push("ViewLocation", item);
-                console.log(item);
+                navigation.push("ViewLocation", {
+                  id: item.id,
+                  name: item.name,
+                  address: item.address,
+                  photoUrl: item.photoUrl, // fallback for compatibility
+                  rating: item.rating,
+                  totalRatings: item.totalRatings,
+                  lat: item.lat,
+                  lng: item.lng,
+                  type: item.type || "restaurant",
+                });
+                console.log("ViewLocation", {
+                  id: item.id,
+                  name: item.name,
+                  address: item.address,
+                  photoUrl: item.image, // fallback for compatibility
+                  description: item.description,
+                  rating: item.rating,
+                  totalRatings: item.totalRatings,
+                  lat: item.lat,
+                  lng: item.lng,
+                  type: item.type || "restaurant",
+                });
               }}
             >
-              <Image source={{ uri: item.image }} style={styles.image} />
+              <Image source={{ uri: item.photoUrl }} style={styles.image} />
               <Text style={styles.name}>{item.name}</Text>
               <View style={styles.detailsRow}>
                 <Text style={styles.detailText}>
-                  ⭐ {item.popularity?.toFixed(1) || "NA"}
+                  ⭐ {item.rating?.toFixed(1) || "NA"}
                 </Text>
               </View>
               {selectedCategory === "food" && (

@@ -1,36 +1,53 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  Button,
   Image,
   Alert,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect } from "react";
 
 export default function ViewLocation({ navigation }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
   const router = useRouter();
   const route = useRoute();
-  const { name, address, description, image, popularity, price } =
-    route.params || {};
+const {
+  id,
+  name,
+  address,
+  description,
+  photoUrl,
+  rating,
+  totalRatings,
+  lat,
+  lng,
+  type,
+} = route.params || {};
+
+const item = {
+  id,
+  name,
+  address,
+  photoUrl, // so that it's compatible with `savePlace`
+  description,
+  rating,
+  totalRatings,
+  lat,
+  lng,
+  type,
+};
 
   const [eventName] = useState(name);
   const [loc] = useState(address);
   const [desc] = useState(description);
-  const [ppopularity] = useState(popularity);
-  const [pprice] = useState(price);
-
-  const item = { name, address, description, image, popularity, price };
+  const [ttotalRatings] = useState(totalRatings);
 
   useEffect(() => {
-    // Check if the user is logged in
     const checkLoginStatus = async () => {
       const loginStatus = await AsyncStorage.getItem("isLoggedIn");
       setIsLoggedIn(loginStatus === "true");
@@ -40,27 +57,24 @@ export default function ViewLocation({ navigation }) {
   }, []);
 
   const savePlace = async (place) => {
+    console.log("📩 Saving place for:", email);
+    console.log("📦 Place to save:", JSON.stringify(place, null, 2));
     if (!isLoggedIn) {
       Alert.alert("Login Required", "You need to be logged in to save places.");
       return;
     }
 
-    const { id, name, description, coordinates, address, image } = {
+    const payload = {
       id: place.id,
       name: place.name,
-      description: place.description,
-      coordinates: { lat: place.lat, lng: place.lng },
       address: place.address,
-      image: place.photoUrl,
-    };
-
-    const payload = {
-      id,
-      name,
-      description,
-      coordinates,
-      address,
-      image,
+      photoUrl: place.photoUrl,
+      description: place.description,
+      rating: place.rating,
+      totalRatings: place.totalRatings,
+      lat: place.lat,
+      lng: place.lng,
+      type: place.type || "restaurant", // optional fallback
     };
 
     console.log("Saving place:", payload);
@@ -74,7 +88,7 @@ export default function ViewLocation({ navigation }) {
 
   return (
     <View style={styles.container}>
-      {image && <Image source={{ uri: image }} style={styles.image} />}
+      {photoUrl && <Image source={{ uri: photoUrl }} style={styles.image} />}
       <View style={styles.infoContainer}>
         <Text style={styles.label}>Name</Text>
         <Text style={styles.value}>{eventName}</Text>
@@ -89,17 +103,19 @@ export default function ViewLocation({ navigation }) {
       </View>
       <View style={styles.infoContainer}>
         <Text style={styles.label}>Popularity</Text>
-        <Text style={styles.value}>{ppopularity}</Text>
+        <Text style={styles.value}>{rating}</Text>
       </View>
       <View style={styles.infoContainer}>
-        <Text style={styles.label}>Price</Text>
-        <Text style={styles.value}>{pprice}</Text>
+        <Text style={styles.label}>Total Ratings</Text>
+        <Text style={styles.value}>{ttotalRatings}</Text>
       </View>
 
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={styles.saveButton}
           onPress={() => {
+            
+            console.log("📦 Place to save:", JSON.stringify(item, null, 2));
             savePlace(item);
           }}
         >
@@ -146,17 +162,6 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 18,
     color: "#555",
-  },
-  dateTimeContainer: {
-    marginBottom: 15,
-  },
-  dateTimePicker: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-    borderBottomColor: "#ccc",
-    paddingBottom: 5,
   },
   buttonContainer: {
     justifyContent: "center",

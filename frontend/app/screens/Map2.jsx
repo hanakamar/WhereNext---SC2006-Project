@@ -96,32 +96,16 @@ export default function MApp() {
   };
 
   const savePlace = async (place) => {
+    console.log("📩 Saving place for:", email);
+    console.log("📦 Place to save:", JSON.stringify(place, null, 2));
     if (!isLoggedIn) {
       Alert.alert("Login Required", "You need to be logged in to save places.");
       return;
     }
 
-    const { id, name, description, coordinates, address, image } = {
-      id: place.id,
-      name: place.name,
-      description: place.description,
-      coordinates: { lat: place.lat, lng: place.lng },
-      address: place.address,
-      image: place.photoUrl,
-    };
-
-    const payload = {
-      id,
-      name,
-      description,
-      coordinates,
-      address,
-      image,
-    };
-
-    console.log("Saving place:", payload);
+    console.log("Saving place:", place);
     try {
-      await axios.post(`${API_BASE_URL}/api/bookmark/?email=${email}`, payload);
+      await axios.post(`${API_BASE_URL}/api/saved/?email=${email}`, payload);
       setSavedPlaces((prev) => [...prev, id]);
     } catch (err) {
       console.error("❌ Failed to save place:", err);
@@ -149,7 +133,7 @@ export default function MApp() {
       const rawPlaces = response.data.foodPlaces;
       setFoodPlaces(rawPlaces); // ✅ Keep original structure for Map2
 
-      // ✅ Map full structure for catalogue
+      // ✅ Map full unified structure for SharedData & Catalogue
       const mappedResults = rawPlaces.map((place, index) => ({
         id: place.id || `place_${index}`,
         name: place.name,
@@ -157,10 +141,11 @@ export default function MApp() {
         image:
           place.photoUrl ||
           "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
-        description: place.type === "cafe" ? "Cafe" : "Restaurant",
-        distance: 0,
-        popularity: place.rating || 4.0,
-        price: place.priceLevel || 2,
+        rating: place.rating || 4.0,
+        totalRatings: place.totalRatings || 0,
+        lat: place.lat,
+        lng: place.lng,
+        type: place.type === "Custom" ? "cafe" : "restaurant",
       }));
 
       console.log(
@@ -168,6 +153,8 @@ export default function MApp() {
         mappedResults.length,
         "places"
       );
+
+      // ✅ Save to SharedData
       SharedData.setPlaces(mappedResults);
       SharedData.setLastLocation(reg);
       EventBus.emit("refreshCatalogue");
