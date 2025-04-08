@@ -2,7 +2,8 @@ let _places = [];
 let _lastLocation = null;
 let _searchResults = [];
 let _needsRefresh = false; 
-let _savedPlaces = [];// ✅ New refresh flag
+let _savedPlaces = []; // ✅ IDs of saved places
+let _savedPlaceData = []; // ✅ Full saved place object
 
 const SharedData = {
     setPlaces: (places) => {
@@ -42,6 +43,13 @@ const SharedData = {
     getSavedPlaces: () => {
       return Array.isArray(_savedPlaces) ? _savedPlaces : [];
     },
+
+    setSavedPlaceData: (places) => {
+        _savedPlaceData = places;
+      },
+      getSavedPlaceData: () => {
+        return Array.isArray(_savedPlaceData) ? _savedPlaceData : [];
+      },
   
     consumeRefreshFlag: () => {
       const current = _needsRefresh;

@@ -18,14 +18,8 @@ import { API_BASE_URL } from "@env";
 import SharedData from "../SharedData";
 import EventBus from "../EventBus";
 
-// Dummy event data
-const eventData = [
-  // same as before
-];
-
-const fallbackRestaurantData = [
-  // same as before
-];
+const eventData = [];
+const fallbackRestaurantData = [];
 
 export default function Catalogue({ navigation }) {
   const [selectedCategory, setSelectedCategory] = useState("food");
@@ -37,14 +31,14 @@ export default function Catalogue({ navigation }) {
   const [userLocation, setUserLocation] = useState(null);
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const router = useRouter();
-  const [savedPlaces, setSavedPlaces] = useState([]);
-
+  const [savedPlaceIds, setSavedPlaceIds] = useState([]);
+  const [savedPlaceData, setSavedPlaceData] = useState([]);
 
   useEffect(() => {
     if (SharedData.consumeRefreshFlag()) {
       const newPlaces = SharedData.getPlaces();
       const newLoc = SharedData.getLastLocation();
-      
+
       const seen = new Set();
       const deduped = newPlaces.filter((item) => {
         if (!item.id) {
@@ -55,7 +49,7 @@ export default function Catalogue({ navigation }) {
         seen.add(item.id);
         return true;
       });
-  
+
       console.log("🟡 Catalogue - Initial load. Got", deduped.length, "places from SharedData");
       setRestaurantData(deduped);
       if (newLoc) setUserLocation(newLoc);
@@ -65,11 +59,9 @@ export default function Catalogue({ navigation }) {
   useEffect(() => {
     const refresh = () => {
       const sharedPlaces = SharedData.getPlaces();
-      const savedPlaces = SharedData.getSavedPlaces();
-  
+      const savedPlaces = SharedData.getSavedPlaceData();
+
       const merged = [...sharedPlaces];
-  
-      // Append saved places if not already in the shared list
       if (savedPlaces && Array.isArray(savedPlaces)) {
         savedPlaces.forEach((saved) => {
           const alreadyExists = merged.some((p) => p.id === saved.id);
@@ -78,38 +70,26 @@ export default function Catalogue({ navigation }) {
           }
         });
       }
-  
-      console.log(
-        "🟡 Catalogue - Received refresh event. Got",
-        merged.length,
-        "places (shared + saved)"
-      );
-  
+
+      console.log("🟡 Catalogue - Received refresh event. Got", merged.length, "places (shared + saved)");
       setRestaurantData(merged);
       setUserLocation(SharedData.getLastLocation());
-      setSavedPlaces(savedPlaces.map((p) => p.id));
+      setSavedPlaceIds(savedPlaces.map((p) => p.id));
+      setSavedPlaceData(savedPlaces);
     };
-  
+
     EventBus.on("refreshCatalogue", refresh);
-  
-    return () => {
-      EventBus.off("refreshCatalogue", refresh);
-    };
+    return () => EventBus.off("refreshCatalogue", refresh);
   }, []);
 
-
-  //Should replace with a error message not logged in
   useEffect(() => {
     if (selectedCategory === "food" && userLocation && !usingFallbackData) {
       const delaySearch = setTimeout(() => {
         fetchNearbyRestaurants(userLocation);
       }, 500);
-
       return () => clearTimeout(delaySearch);
     }
   }, [searchQuery, selectedCategory, userLocation]);
-
-  
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -122,8 +102,7 @@ export default function Catalogue({ navigation }) {
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-    return Number(distance.toFixed(1));
+    return Number((R * c).toFixed(1));
   };
 
   const deg2rad = (deg) => deg * (Math.PI / 180);
@@ -132,14 +111,14 @@ export default function Catalogue({ navigation }) {
     try {
       setLoading(true);
       setError(null);
-  
+
       const response = await fetch(
         `${API_BASE_URL}/api/planner?latitude=${coords.latitude}&longitude=${coords.longitude}`
       );
       if (!response.ok) throw new Error("Failed to fetch food data");
-  
+
       const data = await response.json();
-  
+
       const mappedResults = data.foodPlaces.map((place, index) => ({
         id: place.id || `place_${index}`,
         name: place.name,
@@ -160,17 +139,14 @@ export default function Catalogue({ navigation }) {
         lng: place.lng,
         type: place.type,
       }));
-  
-      // ✅ Include saved places from SharedData
-      const savedPlaces = SharedData.getSavedPlaces() || [];
-      console.log("✅ Saved Places loaded:", savedPlaces.length);
+
+      const savedPlaces = SharedData.getSavedPlaceData() || [];
       const uniqueSaved = savedPlaces.filter(
         (saved) => !mappedResults.some((item) => item.id === saved.id)
       );
-  
+
       const combined = [...mappedResults, ...uniqueSaved];
-  
-      // ✅ Update restaurantData and SharedData
+
       setRestaurantData(combined);
       SharedData.setPlaces(combined);
       SharedData.setLastLocation(coords);
@@ -185,12 +161,8 @@ export default function Catalogue({ navigation }) {
       setLoading(false);
     }
   };
-  
 
-  // Apply search to both categories
   let data = [...restaurantData];
-
-  // Apply search filter to both categories
   if (searchQuery.trim() !== "") {
     data = data.filter(
       (item) =>
@@ -200,10 +172,9 @@ export default function Catalogue({ navigation }) {
     );
   }
 
-  // Apply sorting
   data.sort((a, b) => {
-    if (sortOption === 'distance') return a.distance - b.distance;
-    if (sortOption === 'rating') return b.rating - a.rating;
+    if (sortOption === "distance") return a.distance - b.distance;
+    if (sortOption === "rating") return b.rating - a.rating;
     return 0;
   });
 

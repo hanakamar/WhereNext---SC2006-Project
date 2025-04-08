@@ -14,7 +14,7 @@ import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import axios from "axios";
 import { API_BASE_URL } from "@env";
-import { setSearchResults } from "../SharedData"; // ✅ Add import for shared data
+import { setSearchResults } from "../SharedData";
 import SharedData from "../SharedData";
 import EventBus from "../EventBus";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -32,8 +32,8 @@ export default function MApp() {
   const [selectedPlaceId, setSelectedPlaceId] = useState(null);
   const mapRef = useRef(null);
   const scrollRef = useRef(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
-  const [email, setEmail] = useState(null); // State for user email
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [email, setEmail] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -53,13 +53,6 @@ export default function MApp() {
       };
       setRegion(initialRegion);
       fetchFoodPlaces(initialRegion);
-      console.log("🗺️ Fetching for region:", reg);
-      console.log("🧭 Bounds being sent:", {
-        north: reg.latitude + reg.latitudeDelta / 2,
-        south: reg.latitude - reg.latitudeDelta / 2,
-        east: reg.longitude + reg.longitudeDelta / 2,
-        west: reg.longitude - reg.longitudeDelta / 2,
-      });
     })();
   }, []);
 
@@ -67,20 +60,19 @@ export default function MApp() {
     const fetchSavedPlaces = async () => {
       const userEmail = await AsyncStorage.getItem("userEmail");
       if (!userEmail) return;
-  
+
       try {
         const res = await axios.get(`${API_BASE_URL}/api/saved`, {
           params: { email: userEmail },
         });
-        const saved = res.data.savedPlaces.map((p) => p.id); // extract only the IDs
+        const saved = res.data.savedPlaces.map((p) => p.id);
         setSavedPlaces(saved);
-        
         console.log("✅ Synced savedPlaces:", saved);
       } catch (err) {
         console.error("❌ Error fetching saved places:", err);
       }
     };
-  
+
     fetchSavedPlaces();
   }, []);
 
@@ -90,7 +82,8 @@ export default function MApp() {
         params: { email },
       });
       const saved = res.data.savedPlaces || [];
-      setSavedPlaces(saved); // ✅ Store separately
+      const savedIds = saved.map((p) => p.id);
+      setSavedPlaces(savedIds);
       SharedData.setSavedPlaces(saved);
       return saved;
     } catch (err) {
@@ -104,7 +97,7 @@ export default function MApp() {
     const userEmail = await AsyncStorage.getItem("userEmail");
     setIsLoggedIn(loginStatus === "true");
     setEmail(userEmail || "");
-  
+
     if (loginStatus === "true" && userEmail) {
       await fetchSavedPlacesFromMongo(userEmail);
     }
@@ -138,7 +131,7 @@ export default function MApp() {
       Alert.alert("Login Required", "You need to be logged in to save places.");
       return;
     }
-  
+
     const payload = {
       id: place.id,
       name: place.name,
@@ -150,10 +143,7 @@ export default function MApp() {
       lng: place.lng,
       type: place.type || "restaurant",
     };
-  
-    console.log("📩 Saving place for:", email);
-    console.log("📦 Place to save:", JSON.stringify(payload, null, 2));
-  
+
     try {
       await axios.post(`${API_BASE_URL}/api/saved`, { email, place: payload });
       setSavedPlaces((prev) => [...prev, payload.id]);
@@ -161,7 +151,6 @@ export default function MApp() {
       console.error("❌ Failed to save place:", err);
     }
   };
-  
 
   const fetchFoodPlaces = async (reg) => {
     const bounds = {
@@ -170,6 +159,7 @@ export default function MApp() {
       east: reg.longitude + reg.longitudeDelta / 2,
       west: reg.longitude - reg.longitudeDelta / 2,
     };
+
     const email = await AsyncStorage.getItem("userEmail");
     let fetchedSavedPlaces = [];
 
@@ -187,22 +177,7 @@ export default function MApp() {
 
     try {
       setLoading(true);
-    
-      const email = await AsyncStorage.getItem("userEmail");
-      let fetchedSavedPlaces = [];
-    
-      if (email) {
-        try {
-          const savedResponse = await axios.get(`${API_BASE_URL}/api/saved`, {
-            params: { email },
-          });
-          fetchedSavedPlaces = savedResponse.data.savedPlaces || [];
-          console.log("📥 Retrieved", fetchedSavedPlaces.length, "saved places");
-        } catch (err) {
-          console.warn("⚠️ Could not fetch saved places:", err.message);
-        }
-      }
-    
+
       const response = await axios.get(`${API_BASE_URL}/api/planner`, {
         params: {
           latitude: reg.latitude,
@@ -212,18 +187,14 @@ export default function MApp() {
       });
 
       const rawPlaces = response.data.foodPlaces;
-
-      // ✅ Merge savedPlaces into rawPlaces if they’re not already there
       const uniqueSaved = fetchedSavedPlaces.filter(
         (saved) => !rawPlaces.some((place) => place.id === saved.id)
       );
 
       const allPlaces = [...rawPlaces, ...uniqueSaved];
 
-      // ✅ Update Map2 UI state with raw places (with duplicates removed)
       setFoodPlaces(allPlaces);
 
-      // ✅ Unified format for SharedData & Catalogue
       const mappedResults = allPlaces.map((place, index) => ({
         id: place.id || `place_${place.lat}_${place.lng}_${index}`,
         name: place.name,
@@ -239,18 +210,13 @@ export default function MApp() {
         type: place.type || "restaurant",
       }));
 
-      console.log(
-        "✅ Map2 - SharedData updated with:",
-        mappedResults.length,
-        "places"
-      );
+      console.log("✅ Map2 - SharedData updated with:", mappedResults.length, "places");
 
       SharedData.setPlaces(mappedResults);
       SharedData.setLastLocation(reg);
 
-      // Delay the event to allow SharedData to update
       let retries = 0;
-      const maxRetries = 2; // Try for 10 * 200ms = 2 seconds
+      const maxRetries = 2;
 
       const checkSharedDataReady = () => {
         const check = SharedData.getPlaces();
@@ -259,7 +225,7 @@ export default function MApp() {
           console.log("✅ SharedData is ready. Emitting refreshCatalogue");
           setTimeout(() => {
             EventBus.emit("refreshCatalogue");
-          }, 100); // Delay by 100ms to let Catalogue get ready
+          }, 100);
         } else if (retries < maxRetries) {
           retries++;
           setTimeout(checkSharedDataReady, 200);
@@ -305,26 +271,28 @@ export default function MApp() {
         showsUserLocation
       >
         {Array.isArray(foodPlaces) &&
-          foodPlaces.map((place, i) => (
-            <Marker
-              key={`food-${place.id || i}`} // ✅ Now 'i' is properly defined
-              coordinate={{
-                latitude: parseFloat(place.lat),
-                longitude: parseFloat(place.lng),
-              }}
-              title={place.name}
-              description={place.address}
-              pinColor={
-                selectedPlaceId === place.id
-                  ? "dodgerblue"
-                  : savedPlaces.includes(place.id)
-                  ? "hotpink"
-                  : "orange"
-              }
-              onPress={() => handleMarkerPress(place.id)}
-            />
-          ))}
-
+          foodPlaces.map((place, i) => {
+            const isSaved = savedPlaces.includes(place.id);
+            return (
+              <Marker
+                key={`food-${place.id || i}`}
+                coordinate={{
+                  latitude: parseFloat(place.lat),
+                  longitude: parseFloat(place.lng),
+                }}
+                title={place.name}
+                description={place.address}
+                pinColor={
+                  selectedPlaceId === place.id
+                    ? "dodgerblue"
+                    : isSaved
+                    ? "hotpink"
+                    : "orange"
+                }
+                onPress={() => handleMarkerPress(place.id)}
+              />
+            );
+          })}
       </MapView>
 
       <View
@@ -355,47 +323,43 @@ export default function MApp() {
             showsHorizontalScrollIndicator={false}
           >
             {foodPlaces.map((place, i) => (
-            <TouchableOpacity
-              key={`card-${place.id || i}`} // ✅ Also use 'i' here
-              onPress={() => {
-                setSelectedPlaceId(place.id);
-                centerMapOnPlace(place.lat, place.lng);
-                handleMarkerPress(place.id);
-              }}
-              style={[
-                styles.card,
-                selectedPlaceId === place.id && styles.selectedCard,
-              ]}
-              activeOpacity={0.9}
-            >
-              {place.photoUrl ? (
-                <Image
-                  source={{ uri: place.photoUrl }}
-                  style={styles.image}
-                />
-              ) : (
-                <View style={[styles.image, styles.imagePlaceholder]}>
-                  <Text style={styles.imagePlaceholderText}>No Image</Text>
-                </View>
-              )}
-              <Text style={styles.name}>{place.name}</Text>
-              <Text style={styles.address}>{place.address}</Text>
-              {place.rating && (
-                <Text style={styles.ratingText}>
-                  ⭐ {place.rating} ({place.totalRatings})
-                </Text>
-              )}
               <TouchableOpacity
-                style={styles.saveButton}
-                onPress={() => savePlace(place)}
+                key={`card-${place.id || i}`}
+                onPress={() => {
+                  setSelectedPlaceId(place.id);
+                  centerMapOnPlace(place.lat, place.lng);
+                  handleMarkerPress(place.id);
+                }}
+                style={[
+                  styles.card,
+                  selectedPlaceId === place.id && styles.selectedCard,
+                ]}
+                activeOpacity={0.9}
               >
-                <Text style={styles.saveButtonText}>
-                  {savedPlaces.includes(place.id) ? "Saved" : "Save"}
-                </Text>
+                {place.photoUrl ? (
+                  <Image source={{ uri: place.photoUrl }} style={styles.image} />
+                ) : (
+                  <View style={[styles.image, styles.imagePlaceholder]}>
+                    <Text style={styles.imagePlaceholderText}>No Image</Text>
+                  </View>
+                )}
+                <Text style={styles.name}>{place.name}</Text>
+                <Text style={styles.address}>{place.address}</Text>
+                {place.rating && (
+                  <Text style={styles.ratingText}>
+                    ⭐ {place.rating} ({place.totalRatings})
+                  </Text>
+                )}
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={() => savePlace(place)}
+                >
+                  <Text style={styles.saveButtonText}>
+                    {savedPlaces.includes(place.id) ? "Saved" : "Save"}
+                  </Text>
+                </TouchableOpacity>
               </TouchableOpacity>
-            </TouchableOpacity>
-          ))}
-
+            ))}
           </ScrollView>
         </View>
       )}
@@ -404,18 +368,9 @@ export default function MApp() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  map: {
-    width: "100%",
-    height: "100%",
-  },
-  centered: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  container: { flex: 1 },
+  map: { width: "100%", height: "100%" },
+  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   toggleButton: {
     backgroundColor: "white",
     padding: 8,
@@ -423,10 +378,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     marginHorizontal: 6,
   },
-  toggleButtonText: {
-    fontSize: 24,
-    color: "#333",
-  },
+  toggleButtonText: { fontSize: 24, color: "#333" },
   bottomButtonGroup: {
     position: "absolute",
     alignSelf: "center",
@@ -442,10 +394,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  searchButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
+  searchButtonText: { color: "white", fontWeight: "bold" },
   placeListContainer: {
     position: "absolute",
     bottom: 10,
@@ -466,34 +415,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#ff9800",
   },
-  image: {
-    height: 100,
-    borderRadius: 10,
-    marginBottom: 6,
-  },
+  image: { height: 100, borderRadius: 10, marginBottom: 6 },
   imagePlaceholder: {
     backgroundColor: "#eee",
     justifyContent: "center",
     alignItems: "center",
   },
-  imagePlaceholderText: {
-    color: "#999",
-    fontSize: 12,
-  },
-  name: {
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  address: {
-    color: "#666",
-    fontSize: 13,
-    marginBottom: 4,
-  },
-  ratingText: {
-    fontSize: 13,
-    color: "#444",
-    marginBottom: 4,
-  },
+  imagePlaceholderText: { color: "#999", fontSize: 12 },
+  name: { fontWeight: "bold", fontSize: 16 },
+  address: { color: "#666", fontSize: 13, marginBottom: 4 },
+  ratingText: { fontSize: 13, color: "#444", marginBottom: 4 },
   saveButton: {
     marginTop: 4,
     paddingVertical: 6,
@@ -501,8 +432,5 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
   },
-  saveButtonText: {
-    color: "white",
-    fontWeight: "bold",
-  },
+  saveButtonText: { color: "white", fontWeight: "bold" },
 });
