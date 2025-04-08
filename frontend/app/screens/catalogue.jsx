@@ -16,7 +16,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { API_BASE_URL } from "@env";
 import SharedData from "../SharedData";
-import EventBus from '../EventBus';
+import EventBus from "../EventBus";
 
 // Dummy event data
 const eventData = [
@@ -43,7 +43,11 @@ export default function Catalogue({ navigation }) {
       if (SharedData.consumeRefreshFlag()) {
         const newPlaces = SharedData.getPlaces();
         const newLoc = SharedData.getLastLocation();
-        console.log("🟡 Catalogue - App refreshed. Got", newPlaces.length, "places from SharedData");
+        console.log(
+          "🟡 Catalogue - App refreshed. Got",
+          newPlaces.length,
+          "places from SharedData"
+        );
         setRestaurantData(newPlaces);
         if (newLoc) setUserLocation(newLoc);
       }
@@ -54,15 +58,19 @@ export default function Catalogue({ navigation }) {
   useEffect(() => {
     const refresh = () => {
       const newPlaces = SharedData.getPlaces();
-      console.log("🟡 Catalogue - Received refresh event. Got", newPlaces.length, "places from SharedData");
+      console.log(
+        "🟡 Catalogue - Received refresh event. Got",
+        newPlaces.length,
+        "places from SharedData"
+      );
       setRestaurantData(newPlaces);
       setUserLocation(SharedData.getLastLocation());
     };
-  
-    EventBus.on('refreshCatalogue', refresh);
-  
+
+    EventBus.on("refreshCatalogue", refresh);
+
     return () => {
-      EventBus.off('refreshCatalogue', refresh);
+      EventBus.off("refreshCatalogue", refresh);
     };
   }, []);
 
@@ -146,6 +154,10 @@ export default function Catalogue({ navigation }) {
           place.lat,
           place.lng
         ),
+        coordinates: {
+          latitude: place.lat,
+          longitude: place.lng,
+        },
         popularity: place.rating || 4.0,
         price: place.priceLevel || 2,
       }));
@@ -166,20 +178,22 @@ export default function Catalogue({ navigation }) {
   };
 
   // Apply search to both categories
-  let data = selectedCategory === 'food' ? [...restaurantData] : [...eventData];
-  
+  let data = selectedCategory === "food" ? [...restaurantData] : [...eventData];
+
   // Apply search filter to both categories
-  if (searchQuery.trim() !== '') {
-    data = data.filter(item => 
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      (item.address && item.address.toLowerCase().includes(searchQuery.toLowerCase()))
+  if (searchQuery.trim() !== "") {
+    data = data.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.address &&
+          item.address.toLowerCase().includes(searchQuery.toLowerCase()))
     );
   }
 
   // Apply sorting
   data.sort((a, b) => {
-    if (sortOption === 'distance') return a.distance - b.distance;
-    if (sortOption === 'popularity') return b.popularity - a.popularity;
+    if (sortOption === "distance") return a.distance - b.distance;
+    if (sortOption === "popularity") return b.popularity - a.popularity;
     return 0;
   });
 
@@ -272,7 +286,6 @@ export default function Catalogue({ navigation }) {
               style={styles.card}
               onPress={() => {
                 navigation.push("ViewLocation", item);
-                console.log(item);
               }}
             >
               <Image source={{ uri: item.image }} style={styles.image} />

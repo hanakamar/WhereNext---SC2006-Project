@@ -13,13 +13,25 @@ import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect } from "react";
+import axios from "axios";
+import { API_BASE_URL } from "@env";
 
 export default function ViewLocation({ navigation }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
+  const [email, setEmail] = useState(""); // State for user email
   const router = useRouter();
   const route = useRoute();
-  const { name, address, description, image, popularity, price } =
-    route.params || {};
+
+  const {
+    id,
+    name,
+    description,
+    coordinates,
+    address,
+    image,
+    popularity,
+    price,
+  } = route.params || {};
 
   const [eventName] = useState(name);
   const [loc] = useState(address);
@@ -27,12 +39,23 @@ export default function ViewLocation({ navigation }) {
   const [ppopularity] = useState(popularity);
   const [pprice] = useState(price);
 
-  const item = { name, address, description, image, popularity, price };
+  const item = {
+    id,
+    name,
+    description,
+    coordinates,
+    address,
+    image,
+    popularity,
+    price,
+  };
 
   useEffect(() => {
     // Check if the user is logged in
     const checkLoginStatus = async () => {
       const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+      const userEmail = await AsyncStorage.getItem("userEmail");
+      setEmail(userEmail);
       setIsLoggedIn(loginStatus === "true");
     };
 
@@ -45,28 +68,21 @@ export default function ViewLocation({ navigation }) {
       return;
     }
 
-    const { id, name, description, coordinates, address, image } = {
+    const payload = {
       id: place.id,
       name: place.name,
       description: place.description,
-      coordinates: { lat: place.lat, lng: place.lng },
+      coordinates: place.coordinates,
       address: place.address,
-      image: place.photoUrl,
+      image: place.image,
     };
 
-    const payload = {
-      id,
-      name,
-      description,
-      coordinates,
-      address,
-      image,
-    };
-
-    console.log("Saving place:", payload);
+    console.log("User email:", email);
+    console.log("API URL:", `${API_BASE_URL}/api/bookmark/?email=${email}`);
     try {
       await axios.post(`${API_BASE_URL}/api/bookmark/?email=${email}`, payload);
-      setSavedPlaces((prev) => [...prev, id]);
+      console.log("✅ Place saved successfully!");
+      navigation.navigate("Main"); // Navigate to main
     } catch (err) {
       console.error("❌ Failed to save place:", err);
     }

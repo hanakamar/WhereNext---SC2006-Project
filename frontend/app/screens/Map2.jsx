@@ -105,7 +105,7 @@ export default function MApp() {
       id: place.id,
       name: place.name,
       description: place.description,
-      coordinates: { lat: place.lat, lng: place.lng },
+      coordinates: { latitude: place.lat, longitude: place.lng },
       address: place.address,
       image: place.photoUrl,
     };
@@ -121,6 +121,7 @@ export default function MApp() {
 
     console.log("Saving place:", payload);
     try {
+      console.log("📧 User email:", email);
       await axios.post(`${API_BASE_URL}/api/bookmark/?email=${email}`, payload);
       setSavedPlaces((prev) => [...prev, id]);
     } catch (err) {
