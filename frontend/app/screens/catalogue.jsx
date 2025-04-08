@@ -37,38 +37,61 @@ export default function Catalogue({ navigation }) {
   const [userLocation, setUserLocation] = useState(null);
   const [usingFallbackData, setUsingFallbackData] = useState(false);
   const router = useRouter();
+  const [savedPlaces, setSavedPlaces] = useState([]);
+
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (SharedData.consumeRefreshFlag()) {
-        const newPlaces = SharedData.getPlaces();
-        const newLoc = SharedData.getLastLocation();
-        console.log(
-          "🟡 Catalogue - App refreshed. Got",
-          newPlaces.length,
-          "places from SharedData"
-        );
-        setRestaurantData(newPlaces);
-        if (newLoc) setUserLocation(newLoc);
-      }
-    }, 1000);
-    return () => clearInterval(interval);
+    if (SharedData.consumeRefreshFlag()) {
+      const newPlaces = SharedData.getPlaces();
+      const newLoc = SharedData.getLastLocation();
+      
+      const seen = new Set();
+      const deduped = newPlaces.filter((item) => {
+        if (!item.id) {
+          console.warn("⚠️ Item missing id:", item);
+          return false;
+        }
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      });
+  
+      console.log("🟡 Catalogue - Initial load. Got", deduped.length, "places from SharedData");
+      setRestaurantData(deduped);
+      if (newLoc) setUserLocation(newLoc);
+    }
   }, []);
 
   useEffect(() => {
     const refresh = () => {
-      const newPlaces = SharedData.getPlaces();
+      const sharedPlaces = SharedData.getPlaces();
+      const savedPlaces = SharedData.getSavedPlaces();
+  
+      const merged = [...sharedPlaces];
+  
+      // Append saved places if not already in the shared list
+      if (savedPlaces && Array.isArray(savedPlaces)) {
+        savedPlaces.forEach((saved) => {
+          const alreadyExists = merged.some((p) => p.id === saved.id);
+          if (!alreadyExists) {
+            merged.push(saved);
+          }
+        });
+      }
+  
       console.log(
         "🟡 Catalogue - Received refresh event. Got",
-        newPlaces.length,
-        "places from SharedData"
+        merged.length,
+        "places (shared + saved)"
       );
-      setRestaurantData(newPlaces);
+  
+      setRestaurantData(merged);
       setUserLocation(SharedData.getLastLocation());
+      setSavedPlaces(savedPlaces.map((p) => p.id));
     };
-
+  
     EventBus.on("refreshCatalogue", refresh);
-
+  
     return () => {
       EventBus.off("refreshCatalogue", refresh);
     };
@@ -109,19 +132,20 @@ export default function Catalogue({ navigation }) {
     try {
       setLoading(true);
       setError(null);
-
+  
       const response = await fetch(
         `${API_BASE_URL}/api/planner?latitude=${coords.latitude}&longitude=${coords.longitude}`
       );
       if (!response.ok) throw new Error("Failed to fetch food data");
-
+  
       const data = await response.json();
-
+  
       const mappedResults = data.foodPlaces.map((place, index) => ({
         id: place.id || `place_${index}`,
         name: place.name,
         address: place.address,
-        photoUrl: place.photoUrl ||
+        photoUrl:
+          place.photoUrl ||
           "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
         description: place.type === "cafe" ? "Cafe" : "Restaurant",
         distance: calculateDistance(
@@ -132,14 +156,23 @@ export default function Catalogue({ navigation }) {
         ),
         rating: place.rating || 4.0,
         totalRatings: place.totalRatings || 0,
-        lat: place.lat,  // ✅ Include
-        lng: place.lng,  // ✅ Include
-        type: place.type , // ✅ Include
+        lat: place.lat,
+        lng: place.lng,
+        type: place.type,
       }));
-      
-
-      setRestaurantData(mappedResults);
-      SharedData.setPlaces(mappedResults);
+  
+      // ✅ Include saved places from SharedData
+      const savedPlaces = SharedData.getSavedPlaces() || [];
+      console.log("✅ Saved Places loaded:", savedPlaces.length);
+      const uniqueSaved = savedPlaces.filter(
+        (saved) => !mappedResults.some((item) => item.id === saved.id)
+      );
+  
+      const combined = [...mappedResults, ...uniqueSaved];
+  
+      // ✅ Update restaurantData and SharedData
+      setRestaurantData(combined);
+      SharedData.setPlaces(combined);
       SharedData.setLastLocation(coords);
       setUsingFallbackData(false);
     } catch (err) {
@@ -152,9 +185,10 @@ export default function Catalogue({ navigation }) {
       setLoading(false);
     }
   };
+  
 
   // Apply search to both categories
-  let data = selectedCategory === "food" ? [...restaurantData] : [...eventData];
+  let data = [...restaurantData];
 
   // Apply search filter to both categories
   if (searchQuery.trim() !== "") {

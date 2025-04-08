@@ -16,6 +16,7 @@ import BackButton from "../components/BackButton";
 import { commonStyles } from "../styles/commonStyleSheet";
 import { Link, useRouter } from "expo-router";
 import config from "../../config";
+
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect } from "react";
@@ -40,6 +41,8 @@ const Login = ({ navigation }) => {
 
     /* Add backend stuff here to help login */
     try {
+      console.log(userData);
+      console.log(`${config.API_URL}/api/profile/login`);
       const res = await axios.post(
         `${config.API_URL}/api/profile/login`,
         userData
@@ -54,7 +57,7 @@ const Login = ({ navigation }) => {
         Alert.alert("Login Failed", res.data.message || "Unexpected error");
       }
     } catch (error) {
-      Alert.alert("Error", error.message);
+      Alert.alert("Error 2", error.message);
     }
   }
 

@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import config from "../../config"; // Adjust the path as necessary
 
+
 const UserProfile = ({ navigation }) => {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status

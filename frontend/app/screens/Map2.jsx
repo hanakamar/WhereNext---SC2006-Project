@@ -64,14 +64,51 @@ export default function MApp() {
   }, []);
 
   useEffect(() => {
-    const checkLoginStatus = async () => {
-      const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+    const fetchSavedPlaces = async () => {
       const userEmail = await AsyncStorage.getItem("userEmail");
-      setIsLoggedIn(loginStatus === "true");
-      setEmail(userEmail || ""); // Set the email state if it exists
+      if (!userEmail) return;
+  
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/saved`, {
+          params: { email: userEmail },
+        });
+        const saved = res.data.savedPlaces.map((p) => p.id); // extract only the IDs
+        setSavedPlaces(saved);
+        
+        console.log("✅ Synced savedPlaces:", saved);
+      } catch (err) {
+        console.error("❌ Error fetching saved places:", err);
+      }
     };
-    checkLoginStatus();
+  
+    fetchSavedPlaces();
   }, []);
+
+  const fetchSavedPlacesFromMongo = async (email) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/saved`, {
+        params: { email },
+      });
+      const saved = res.data.savedPlaces || [];
+      setSavedPlaces(saved); // ✅ Store separately
+      SharedData.setSavedPlaces(saved);
+      return saved;
+    } catch (err) {
+      console.error("❌ Failed to fetch saved places:", err);
+      return [];
+    }
+  };
+
+  const checkLoginStatus = async () => {
+    const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+    const userEmail = await AsyncStorage.getItem("userEmail");
+    setIsLoggedIn(loginStatus === "true");
+    setEmail(userEmail || "");
+  
+    if (loginStatus === "true" && userEmail) {
+      await fetchSavedPlacesFromMongo(userEmail);
+    }
+  };
 
   const centerMapOnPlace = (lat, lng) => {
     if (mapRef.current) {
@@ -96,15 +133,12 @@ export default function MApp() {
   };
 
   const savePlace = async (place) => {
-    // temp email
-    const email = "test@gmail.com";
-    console.log("📩 Saving place for:", email);
-    console.log("📦 Place to save:", JSON.stringify(place, null, 2));
-    // tabbed out  for testing
-    if (!isLoggedIn) {
+    const email = await AsyncStorage.getItem("userEmail");
+    if (!email) {
       Alert.alert("Login Required", "You need to be logged in to save places.");
-      // return;
+      return;
     }
+  
     const payload = {
       id: place.id,
       name: place.name,
@@ -114,19 +148,20 @@ export default function MApp() {
       totalRatings: place.totalRatings,
       lat: place.lat,
       lng: place.lng,
-      type: place.type || "restaurant", // optional fallback
+      type: place.type || "restaurant",
     };
-    console.log("Saving place:", place);
+  
+    console.log("📩 Saving place for:", email);
+    console.log("📦 Place to save:", JSON.stringify(payload, null, 2));
+  
     try {
-      await axios.post(`${API_BASE_URL}/api/saved`, {
-        email,
-        place: payload ,
-      });
+      await axios.post(`${API_BASE_URL}/api/saved`, { email, place: payload });
       setSavedPlaces((prev) => [...prev, payload.id]);
     } catch (err) {
       console.error("❌ Failed to save place:", err);
     }
   };
+  
 
   const fetchFoodPlaces = async (reg) => {
     const bounds = {
@@ -135,9 +170,39 @@ export default function MApp() {
       east: reg.longitude + reg.longitudeDelta / 2,
       west: reg.longitude - reg.longitudeDelta / 2,
     };
+    const email = await AsyncStorage.getItem("userEmail");
+    let fetchedSavedPlaces = [];
+
+    if (email) {
+      try {
+        const savedResponse = await axios.get(`${API_BASE_URL}/api/saved`, {
+          params: { email },
+        });
+        fetchedSavedPlaces = savedResponse.data.savedPlaces || [];
+        console.log("📥 Retrieved", fetchedSavedPlaces.length, "saved places");
+      } catch (err) {
+        console.warn("⚠️ Could not fetch saved places:", err.message);
+      }
+    }
 
     try {
       setLoading(true);
+    
+      const email = await AsyncStorage.getItem("userEmail");
+      let fetchedSavedPlaces = [];
+    
+      if (email) {
+        try {
+          const savedResponse = await axios.get(`${API_BASE_URL}/api/saved`, {
+            params: { email },
+          });
+          fetchedSavedPlaces = savedResponse.data.savedPlaces || [];
+          console.log("📥 Retrieved", fetchedSavedPlaces.length, "saved places");
+        } catch (err) {
+          console.warn("⚠️ Could not fetch saved places:", err.message);
+        }
+      }
+    
       const response = await axios.get(`${API_BASE_URL}/api/planner`, {
         params: {
           latitude: reg.latitude,
@@ -147,21 +212,31 @@ export default function MApp() {
       });
 
       const rawPlaces = response.data.foodPlaces;
-      setFoodPlaces(rawPlaces); // ✅ Keep original structure for Map2
 
-      // ✅ Map full unified structure for SharedData & Catalogue
-      const mappedResults = rawPlaces.map((place, index) => ({
-        id: place.id || `place_${index}`,
+      // ✅ Merge savedPlaces into rawPlaces if they’re not already there
+      const uniqueSaved = fetchedSavedPlaces.filter(
+        (saved) => !rawPlaces.some((place) => place.id === saved.id)
+      );
+
+      const allPlaces = [...rawPlaces, ...uniqueSaved];
+
+      // ✅ Update Map2 UI state with raw places (with duplicates removed)
+      setFoodPlaces(allPlaces);
+
+      // ✅ Unified format for SharedData & Catalogue
+      const mappedResults = allPlaces.map((place, index) => ({
+        id: place.id || `place_${place.lat}_${place.lng}_${index}`,
         name: place.name,
         address: place.address,
         image:
           place.photoUrl ||
           "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/restaurant-71.png",
+        photoUrl: place.photoUrl,
         rating: place.rating || 4.0,
         totalRatings: place.totalRatings || 0,
         lat: place.lat,
         lng: place.lng,
-        type: place.type === "Custom" ? "cafe" : "restaurant",
+        type: place.type || "restaurant",
       }));
 
       console.log(
@@ -170,10 +245,30 @@ export default function MApp() {
         "places"
       );
 
-      // ✅ Save to SharedData
       SharedData.setPlaces(mappedResults);
       SharedData.setLastLocation(reg);
-      EventBus.emit("refreshCatalogue");
+
+      // Delay the event to allow SharedData to update
+      let retries = 0;
+      const maxRetries = 2; // Try for 10 * 200ms = 2 seconds
+
+      const checkSharedDataReady = () => {
+        const check = SharedData.getPlaces();
+        console.log("🔁 Checking SharedData —", check.length, "places");
+        if (check.length > 0) {
+          console.log("✅ SharedData is ready. Emitting refreshCatalogue");
+          setTimeout(() => {
+            EventBus.emit("refreshCatalogue");
+          }, 100); // Delay by 100ms to let Catalogue get ready
+        } else if (retries < maxRetries) {
+          retries++;
+          setTimeout(checkSharedDataReady, 200);
+        } else {
+          console.warn("❌ SharedData failed to populate after multiple tries");
+        }
+      };
+
+      checkSharedDataReady();
     } catch (error) {
       console.error("❌ Error refreshing data:", error);
       Alert.alert("Error", "Failed to refresh area data.");
@@ -184,12 +279,7 @@ export default function MApp() {
 
   const handleSearchArea = async () => {
     if (region) {
-      const data = await fetchFoodPlaces(region); // make fetchFoodPlaces return mappedResults
-      SharedData.setPlaces(data);
-      SharedData.setLastLocation(region);
-      console.log("✅ Map2 - SharedData updated with:", data.length, "places");
-
-      EventBus.emit("refreshCatalogue");
+      await fetchFoodPlaces(region);
     }
   };
 
@@ -215,19 +305,26 @@ export default function MApp() {
         showsUserLocation
       >
         {Array.isArray(foodPlaces) &&
-          foodPlaces.map((place) => (
+          foodPlaces.map((place, i) => (
             <Marker
-              key={`food-${place.id}`}
+              key={`food-${place.id || i}`} // ✅ Now 'i' is properly defined
               coordinate={{
                 latitude: parseFloat(place.lat),
                 longitude: parseFloat(place.lng),
               }}
               title={place.name}
               description={place.address}
-              pinColor={selectedPlaceId === place.id ? "dodgerblue" : "orange"}
+              pinColor={
+                selectedPlaceId === place.id
+                  ? "dodgerblue"
+                  : savedPlaces.includes(place.id)
+                  ? "hotpink"
+                  : "orange"
+              }
               onPress={() => handleMarkerPress(place.id)}
             />
           ))}
+
       </MapView>
 
       <View
@@ -257,47 +354,48 @@ export default function MApp() {
             horizontal
             showsHorizontalScrollIndicator={false}
           >
-            {foodPlaces.map((place) => (
+            {foodPlaces.map((place, i) => (
+            <TouchableOpacity
+              key={`card-${place.id || i}`} // ✅ Also use 'i' here
+              onPress={() => {
+                setSelectedPlaceId(place.id);
+                centerMapOnPlace(place.lat, place.lng);
+                handleMarkerPress(place.id);
+              }}
+              style={[
+                styles.card,
+                selectedPlaceId === place.id && styles.selectedCard,
+              ]}
+              activeOpacity={0.9}
+            >
+              {place.photoUrl ? (
+                <Image
+                  source={{ uri: place.photoUrl }}
+                  style={styles.image}
+                />
+              ) : (
+                <View style={[styles.image, styles.imagePlaceholder]}>
+                  <Text style={styles.imagePlaceholderText}>No Image</Text>
+                </View>
+              )}
+              <Text style={styles.name}>{place.name}</Text>
+              <Text style={styles.address}>{place.address}</Text>
+              {place.rating && (
+                <Text style={styles.ratingText}>
+                  ⭐ {place.rating} ({place.totalRatings})
+                </Text>
+              )}
               <TouchableOpacity
-                key={place.id}
-                onPress={() => {
-                  setSelectedPlaceId(place.id);
-                  centerMapOnPlace(place.lat, place.lng);
-                  handleMarkerPress(place.id);
-                }}
-                style={[
-                  styles.card,
-                  selectedPlaceId === place.id && styles.selectedCard,
-                ]}
-                activeOpacity={0.9}
+                style={styles.saveButton}
+                onPress={() => savePlace(place)}
               >
-                {place.photoUrl ? (
-                  <Image
-                    source={{ uri: place.photoUrl }}
-                    style={styles.image}
-                  />
-                ) : (
-                  <View style={[styles.image, styles.imagePlaceholder]}>
-                    <Text style={styles.imagePlaceholderText}>No Image</Text>
-                  </View>
-                )}
-                <Text style={styles.name}>{place.name}</Text>
-                <Text style={styles.address}>{place.address}</Text>
-                {place.rating && (
-                  <Text style={styles.ratingText}>
-                    ⭐ {place.rating} ({place.totalRatings})
-                  </Text>
-                )}
-                <TouchableOpacity
-                  style={styles.saveButton}
-                  onPress={() => savePlace(place)}
-                >
-                  <Text style={styles.saveButtonText}>
-                    {savedPlaces.includes(place.id) ? "Saved" : "Save"}
-                  </Text>
-                </TouchableOpacity>
+                <Text style={styles.saveButtonText}>
+                  {savedPlaces.includes(place.id) ? "Saved" : "Save"}
+                </Text>
               </TouchableOpacity>
-            ))}
+            </TouchableOpacity>
+          ))}
+
           </ScrollView>
         </View>
       )}

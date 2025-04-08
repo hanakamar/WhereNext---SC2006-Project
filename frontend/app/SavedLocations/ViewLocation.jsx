@@ -47,18 +47,32 @@ const item = {
   const [loc] = useState(address);
   const [desc] = useState(type);
   const [ttotalRatings] = useState(totalRatings);
+  const [email, setEmail] = useState(null);
 
   useEffect(() => {
-    const checkLoginStatus = async () => {
+    const fetchSaved = async () => {
       const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+      const userEmail = await AsyncStorage.getItem("userEmail");
       setIsLoggedIn(loginStatus === "true");
+      setEmail(userEmail);
+  
+      if (userEmail) {
+        try {
+          const response = await axios.get(`${API_BASE_URL}/api/saved`, {
+            params: { email: userEmail },
+          });
+          const savedIds = response.data.savedPlaces.map((p) => p.id);
+          setSavedPlaces(savedIds); // 🔁 Set array of saved place IDs
+        } catch (err) {
+          console.error("❌ Failed to fetch saved places:", err);
+        }
+      }
     };
-
-    checkLoginStatus();
+  
+    fetchSaved();
   }, []);
 
   const savePlace = async (place) => {
-    email = "test@gmail.com";
     console.log("📩 Saving place for:", email);
     console.log("📦 Place to save(here):", JSON.stringify(place, null, 2));
     // Will tab out for testing as log in not working
@@ -85,7 +99,7 @@ const item = {
         email,
         place: payload,
       });
-      setSavedPlaces((prev) => [...prev, id]);
+      setSavedPlaces((prev) => [...new Set([...prev, id])]);
     } catch (err) {
       console.error("❌ Failed to save place:", err);
     }
@@ -116,16 +130,19 @@ const item = {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={() => {
-            
-            console.log("📦 Place to save:", JSON.stringify(item, null, 2));
-            savePlace(item);
-          }}
+      <TouchableOpacity
+          style={[
+            styles.saveButton,
+            savedPlaces.includes(item.id) && styles.savedButton, // ✅ Apply style if already saved
+          ]}
+          onPress={() => savePlace(item)}
+          disabled={savedPlaces.includes(item.id)} // ✅ Optional: disable button if saved
         >
-          <Text style={styles.saveButtonText}>Save to Planner</Text>
+          <Text style={styles.saveButtonText}>
+            {savedPlaces.includes(item.id) ? "✅ Saved" : "Save to Planner"}
+          </Text>
         </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -194,5 +211,8 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     textAlign: "center",
+  },
+  savedButton: {
+    backgroundColor: "#28a745", // green
   },
 });
