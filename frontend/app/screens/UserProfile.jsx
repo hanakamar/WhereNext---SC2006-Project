@@ -68,11 +68,10 @@ const UserProfile = ({ navigation }) => {
             }
           );
           setName(response.data[0].name);
+          console.log("User fetched.");
         } catch (error) {
           console.error("Error fetching profile:", error);
         }
-      } else {
-        console.log("User is not logged in.");
       }
     };
 

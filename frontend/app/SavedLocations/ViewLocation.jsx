@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ViewLocation({ navigation }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
+  const [email, setEmail] = useState(""); // State for user email
   const router = useRouter();
   const route = useRoute();
 const {
@@ -50,6 +51,8 @@ const item = {
   useEffect(() => {
     const checkLoginStatus = async () => {
       const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+      const userEmail = await AsyncStorage.getItem("userEmail");
+      setEmail(userEmail);
       setIsLoggedIn(loginStatus === "true");
     };
 
@@ -65,6 +68,7 @@ const item = {
     }
 
     const payload = {
+    const payload = {
       id: place.id,
       name: place.name,
       address: place.address,
@@ -77,10 +81,12 @@ const item = {
       type: place.type || "restaurant", // optional fallback
     };
 
-    console.log("Saving place:", payload);
+    console.log("User email:", email);
+    console.log("API URL:", `${API_BASE_URL}/api/bookmark/?email=${email}`);
     try {
       await axios.post(`${API_BASE_URL}/api/bookmark/?email=${email}`, payload);
-      setSavedPlaces((prev) => [...prev, id]);
+      console.log("✅ Place saved successfully!");
+      navigation.navigate("Main"); // Navigate to main
     } catch (err) {
       console.error("❌ Failed to save place:", err);
     }
