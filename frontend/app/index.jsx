@@ -19,6 +19,7 @@ import DailyPlanner from "./Planner/DailyPlanner";
 import UpdateDetails from "./UserProfile/UpdateDetails";
 import SignUp from "./Authentication/SignUp";
 import PleaseLoginPage from "./screens/PleaseLoginPage";
+import SavedLibraries from "./SavedLibraries/SavedLibraries";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -38,6 +39,8 @@ function MyTabs() {
             iconName = "person";
           } else if (route.name === "Planner") {
             iconName = "calendar";
+          } else if (route.name === "Saved") {
+            iconName = "bookmark";
           }
 
           // Return the icon component
@@ -58,6 +61,11 @@ function MyTabs() {
       <Tab.Screen
         name="Food & Events"
         component={Catalogue}
+        options={{ headerShown: false }}
+      />
+      <Tab.Screen
+        name="Saved"
+        component={SavedLibraries}
         options={{ headerShown: false }}
       />
       <Tab.Screen
