@@ -1,34 +1,67 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import { API_BASE_URL } from '@env';
+import { Ionicons } from '@expo/vector-icons';
 
 const SavedLibraries = () => {
   const [savedLocations, setSavedLocations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
 
   useEffect(() => {
-    loadSavedLocations();
+    fetchSavedLocations();
   }, []);
 
-  const loadSavedLocations = async () => {
+  const fetchSavedLocations = async () => {
+    setLoading(true);
     try {
-      const savedLocationsData = await AsyncStorage.getItem('savedLocations');
-      if (savedLocationsData) {
-        setSavedLocations(JSON.parse(savedLocationsData));
-      }
+      const email = await AsyncStorage.getItem('userEmail');
+      if (!email) return;
+
+      const res = await axios.get(`${API_BASE_URL}/api/saved`, {
+        params: { email },
+      });
+
+      const saved = res.data.savedPlaces || [];
+      setSavedLocations(saved);
+      console.log('📥 Saved places fetched:', saved.length);
     } catch (error) {
-      console.error('Error loading saved locations:', error);
+      console.error('❌ Error loading saved places from MongoDB:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchSavedLocations();
+  };
+
   const renderLocationItem = ({ item }) => (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.locationCard}
-      onPress={() => navigation.navigate('ViewLocation', { location: item })}
+      onPress={() => navigation.navigate('ViewLocation', { ...item })}
     >
-      <Image 
-        source={{ uri: item.image || 'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png' }} 
+      <Image
+        source={{
+          uri:
+            item.photoUrl ||
+            'https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png',
+        }}
         style={styles.locationImage}
       />
       <View style={styles.locationInfo}>
@@ -41,8 +74,19 @@ const SavedLibraries = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Saved Libraries</Text>
-      {savedLocations.length === 0 ? (
+      <View style={styles.header}>
+        <Text style={styles.title}>Saved Libraries</Text>
+        <TouchableOpacity onPress={handleRefresh}>
+          <Ionicons name="refresh" size={24} color="#4a7cff" />
+        </TouchableOpacity>
+      </View>
+
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#4a7cff" />
+          <Text>Loading saved places...</Text>
+        </View>
+      ) : savedLocations.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>No saved locations yet</Text>
           <Text style={styles.emptyStateSubtext}>Save locations to see them here</Text>
@@ -51,8 +95,11 @@ const SavedLibraries = () => {
         <FlatList
           data={savedLocations}
           renderItem={renderLocationItem}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => item.id || `item-${index}`}
           contentContainerStyle={styles.listContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
         />
       )}
     </View>
@@ -60,20 +107,15 @@ const SavedLibraries = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F5',
-    padding: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  container: { flex: 1, backgroundColor: '#F5F5F5', padding: 16 },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 20,
-    color: '#333',
   },
-  listContainer: {
-    paddingBottom: 20,
-  },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#333' },
+  listContainer: { paddingBottom: 20 },
   locationCard: {
     backgroundColor: 'white',
     borderRadius: 12,
@@ -109,6 +151,11 @@ const styles = StyleSheet.create({
     color: '#007BFF',
     fontWeight: '500',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
@@ -127,4 +174,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SavedLibraries; 
+export default SavedLibraries;
