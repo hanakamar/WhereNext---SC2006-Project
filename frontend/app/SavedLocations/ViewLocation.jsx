@@ -11,17 +11,18 @@ import { useRouter } from "expo-router";
 import { useRoute } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { API_BASE_URL } from "@env";
 
 export default function ViewLocation({ navigation }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
-  const [email, setEmail] = useState(""); // State for user email
   const router = useRouter();
   const route = useRoute();
+  const [savedPlaces, setSavedPlaces] = useState([]);
 const {
   id,
   name,
   address,
-  description,
   photoUrl,
   rating,
   totalRatings,
@@ -35,7 +36,6 @@ const item = {
   name,
   address,
   photoUrl, // so that it's compatible with `savePlace`
-  description,
   rating,
   totalRatings,
   lat,
@@ -45,14 +45,12 @@ const item = {
 
   const [eventName] = useState(name);
   const [loc] = useState(address);
-  const [desc] = useState(description);
+  const [desc] = useState(type);
   const [ttotalRatings] = useState(totalRatings);
 
   useEffect(() => {
     const checkLoginStatus = async () => {
       const loginStatus = await AsyncStorage.getItem("isLoggedIn");
-      const userEmail = await AsyncStorage.getItem("userEmail");
-      setEmail(userEmail);
       setIsLoggedIn(loginStatus === "true");
     };
 
@@ -60,20 +58,20 @@ const item = {
   }, []);
 
   const savePlace = async (place) => {
+    email = "test@gmail.com";
     console.log("📩 Saving place for:", email);
-    console.log("📦 Place to save:", JSON.stringify(place, null, 2));
+    console.log("📦 Place to save(here):", JSON.stringify(place, null, 2));
+    // Will tab out for testing as log in not working
     if (!isLoggedIn) {
       Alert.alert("Login Required", "You need to be logged in to save places.");
-      return;
+      //return;
     }
 
-    const payload = {
     const payload = {
       id: place.id,
       name: place.name,
       address: place.address,
       photoUrl: place.photoUrl,
-      description: place.description,
       rating: place.rating,
       totalRatings: place.totalRatings,
       lat: place.lat,
@@ -81,12 +79,13 @@ const item = {
       type: place.type || "restaurant", // optional fallback
     };
 
-    console.log("User email:", email);
-    console.log("API URL:", `${API_BASE_URL}/api/bookmark/?email=${email}`);
+    console.log("Saving place:", payload);
     try {
-      await axios.post(`${API_BASE_URL}/api/bookmark/?email=${email}`, payload);
-      console.log("✅ Place saved successfully!");
-      navigation.navigate("Main"); // Navigate to main
+      await axios.post(`${API_BASE_URL}/api/saved`, {
+        email,
+        place: payload,
+      });
+      setSavedPlaces((prev) => [...prev, id]);
     } catch (err) {
       console.error("❌ Failed to save place:", err);
     }

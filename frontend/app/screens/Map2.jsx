@@ -96,17 +96,33 @@ export default function MApp() {
   };
 
   const savePlace = async (place) => {
+    // temp email
+    const email = "test@gmail.com";
     console.log("📩 Saving place for:", email);
     console.log("📦 Place to save:", JSON.stringify(place, null, 2));
+    // tabbed out  for testing
     if (!isLoggedIn) {
       Alert.alert("Login Required", "You need to be logged in to save places.");
-      return;
+      // return;
     }
-
+    const payload = {
+      id: place.id,
+      name: place.name,
+      address: place.address,
+      photoUrl: place.photoUrl,
+      rating: place.rating,
+      totalRatings: place.totalRatings,
+      lat: place.lat,
+      lng: place.lng,
+      type: place.type || "restaurant", // optional fallback
+    };
     console.log("Saving place:", place);
     try {
-      await axios.post(`${API_BASE_URL}/api/saved/?email=${email}`, payload);
-      setSavedPlaces((prev) => [...prev, id]);
+      await axios.post(`${API_BASE_URL}/api/saved`, {
+        email,
+        place: payload ,
+      });
+      setSavedPlaces((prev) => [...prev, payload.id]);
     } catch (err) {
       console.error("❌ Failed to save place:", err);
     }

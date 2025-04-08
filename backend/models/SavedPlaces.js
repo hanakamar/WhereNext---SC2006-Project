@@ -4,9 +4,7 @@ const PlaceSchema = new mongoose.Schema({
     id: String,
     name: String,
     address: String,
-    image: String,
     photoUrl:String,
-    description: String,
     rating: Number,
     totalRatings :Number,
     lat: Number,
@@ -16,7 +14,7 @@ const PlaceSchema = new mongoose.Schema({
 
   const SavedPlacesSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
-    places: [PlaceSchema],
+    savedPlaces: [PlaceSchema],
   });
   
   module.exports = mongoose.model("SavedPlaces", SavedPlacesSchema);

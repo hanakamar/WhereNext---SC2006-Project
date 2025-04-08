@@ -9,14 +9,20 @@ exports.savePlace = async (req, res) => {
       }
 
       let user = await SavedPlace.findOne({ email });
-      if (!user) {
+
+        if (!user) {
         user = new SavedPlace({ email, savedPlaces: [place] });
-      } else {
+        } else {
+        // Ensure savedPlaces is initialized
+        if (!Array.isArray(user.savedPlaces)) {
+            user.savedPlaces = [];
+        }
+
         const alreadyExists = user.savedPlaces.some(p => p.id === place.id);
         if (!alreadyExists) {
-          user.savedPlaces.push(place);
+            user.savedPlaces.push(place);
         }
-      }
+        }
 
       await user.save();
       res.status(200).json({ message: "Place saved!" });
