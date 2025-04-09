@@ -11,6 +11,7 @@ import {
   Alert,
   Modal,
   SafeAreaView,
+  Platform,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
@@ -232,6 +233,8 @@ export default function Catalogue({ navigation }) {
 
   return (
     <View style={styles.container}>
+    <View style={styles.statusSpacer} />
+
       {/* Toggle Buttons */}
       <View style={styles.toggleContainer}>
         <TouchableOpacity
@@ -253,27 +256,6 @@ export default function Catalogue({ navigation }) {
             ]}
           >
             Food
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[
-            styles.toggleButton,
-            selectedCategory === "events" && styles.activeToggle,
-          ]}
-          onPress={() => setSelectedCategory("events")}
-        >
-          <Ionicons
-            name="calendar"
-            size={24}
-            color={selectedCategory === "events" ? "white" : "gray"}
-          />
-          <Text
-            style={[
-              styles.toggleText,
-              selectedCategory === "events" && styles.activeToggleText,
-            ]}
-          >
-            Events
           </Text>
         </TouchableOpacity>
       </View>
@@ -473,4 +455,7 @@ const styles = StyleSheet.create({
   detailText: { fontSize: 12, color: "#555" },
   info: { fontSize: 12, color: "gray", textAlign: "center" },
   distanceText: { fontSize: 11, color: "#888", textAlign: "center" },
+  statusSpacer: {
+      height: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 12,
+    },
 });

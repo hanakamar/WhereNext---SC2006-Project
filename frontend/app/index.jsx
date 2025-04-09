@@ -36,7 +36,7 @@ function MyTabs() {
 
           if (route.name === "Map") {
             iconName = "map";
-          } else if (route.name === "Food & Events") {
+          } else if (route.name === "Food ") {
             iconName = "storefront";
           } else if (route.name === "Profile") {
             iconName = "person";
@@ -62,7 +62,7 @@ function MyTabs() {
         options={{ headerShown: false }}
       />
       <Tab.Screen
-        name="Food & Events"
+        name="Food "
         component={Catalogue}
         options={{ headerShown: false }}
       />
