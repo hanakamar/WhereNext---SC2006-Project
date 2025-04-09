@@ -19,29 +19,20 @@ export default function ViewLocation({ navigation }) {
   const router = useRouter();
   const route = useRoute();
   const [savedPlaces, setSavedPlaces] = useState([]);
-const {
-  id,
-  name,
-  address,
-  photoUrl,
-  rating,
-  totalRatings,
-  lat,
-  lng,
-  type,
-} = route.params || {};
+  const { id, name, address, photoUrl, rating, totalRatings, lat, lng, type } =
+    route.params || {};
 
-const item = {
-  id,
-  name,
-  address,
-  photoUrl, // so that it's compatible with `savePlace`
-  rating,
-  totalRatings,
-  lat,
-  lng,
-  type,
-};
+  const item = {
+    id,
+    name,
+    address,
+    photoUrl, // so that it's compatible with `savePlace`
+    rating,
+    totalRatings,
+    lat,
+    lng,
+    type,
+  };
 
   const [eventName] = useState(name);
   const [loc] = useState(address);
@@ -55,7 +46,7 @@ const item = {
       const userEmail = await AsyncStorage.getItem("userEmail");
       setIsLoggedIn(loginStatus === "true");
       setEmail(userEmail);
-  
+
       if (userEmail) {
         try {
           const response = await axios.get(`${API_BASE_URL}/api/saved`, {
@@ -68,7 +59,7 @@ const item = {
         }
       }
     };
-  
+
     fetchSaved();
   }, []);
 
@@ -78,7 +69,7 @@ const item = {
     // Will tab out for testing as log in not working
     if (!isLoggedIn) {
       Alert.alert("Login Required", "You need to be logged in to save places.");
-      //return;
+      return;
     }
 
     const payload = {
@@ -130,7 +121,7 @@ const item = {
       </View>
 
       <View style={styles.buttonContainer}>
-      <TouchableOpacity
+        <TouchableOpacity
           style={[
             styles.saveButton,
             savedPlaces.includes(item.id) && styles.savedButton, // ✅ Apply style if already saved
