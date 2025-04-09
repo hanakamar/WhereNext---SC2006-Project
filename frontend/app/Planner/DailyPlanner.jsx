@@ -23,6 +23,7 @@ import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Print from 'expo-print';
+import SharedData from "../SharedData";
 
 // ... (same imports as before)
 
@@ -127,6 +128,13 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     resetNewPlanForm();
 
     // Here you would save to AsyncStorage
+  };
+
+  const checkIfOpenAtTime = (place, time) => {
+    // This would be implemented with actual opening hours data
+    // For demo, we'll return a reasonable assumption
+    const hour = time.getHours();
+    return hour >= 8 && hour <= 22; // Assuming most places open 8am-10pm
   };
 
 
