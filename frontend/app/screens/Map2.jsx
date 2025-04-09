@@ -34,6 +34,8 @@ export default function MApp() {
   const scrollRef = useRef(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState(null);
+  const [showOnlySaved, setShowOnlySaved] = useState(false);
+
 
   useEffect(() => {
     (async () => {
@@ -257,6 +259,9 @@ export default function MApp() {
       </View>
     );
   }
+  const displayedPlaces = showOnlySaved
+    ? foodPlaces.filter((place) => savedPlaces.includes(place.id))
+    : foodPlaces;
 
   return (
     <View style={styles.container}>
@@ -271,7 +276,7 @@ export default function MApp() {
         showsUserLocation
       >
         {Array.isArray(foodPlaces) &&
-          foodPlaces.map((place, i) => {
+          displayedPlaces.map((place, i) => {
             const isSaved = savedPlaces.includes(place.id);
             return (
               <Marker
@@ -295,15 +300,22 @@ export default function MApp() {
           })}
       </MapView>
 
-      <View
-        style={[styles.bottomButtonGroup, { bottom: showPlaceList ? 310 : 20 }]}
-      >
+      <View style={[styles.bottomButtonGroup, { bottom: showPlaceList ? 310 : 20 }]}>
         <TouchableOpacity
           style={styles.toggleButton}
           onPress={() => setShowPlaceList(!showPlaceList)}
         >
           <Text style={styles.toggleButtonText}>
             {showPlaceList ? "↓" : "↑"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.savedToggleButton}
+          onPress={() => setShowOnlySaved((prev) => !prev)}
+        >
+          <Text style={styles.savedToggleButtonText}>
+            {showOnlySaved ? "All" : "Saved"}
           </Text>
         </TouchableOpacity>
 
@@ -322,7 +334,7 @@ export default function MApp() {
             horizontal
             showsHorizontalScrollIndicator={false}
           >
-            {foodPlaces.map((place, i) => (
+            {displayedPlaces.map((place, i) => (
               <TouchableOpacity
                 key={`card-${place.id || i}`}
                 onPress={() => {
@@ -399,6 +411,19 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 10,
     paddingVertical: 10,
+  },
+  savedToggleButton: {
+    backgroundColor: "#f5f5f5",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginHorizontal: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  savedToggleButtonText: {
+    color: "#333",
+    fontWeight: "bold",
   },
   card: {
     backgroundColor: "#fff",
