@@ -95,6 +95,22 @@ export default function ViewLocation({ navigation }) {
       console.error("❌ Failed to save place:", err);
     }
   };
+  const unsavePlace = async (item) => {
+    try {
+      console.log("🔁 Attempting unsave:", { email, placeId: item.id });
+      if (!email) return;
+  
+      await axios.delete(`${API_BASE_URL}/api/saved`, {
+        data: { email, placeId: item.id },
+      });
+  
+      // Remove place from local state
+      setSavedPlaces((prev) => prev.filter((id) => id !== item.id));
+      console.log("🗑️ Unsaved:", item.name);
+    } catch (err) {
+      console.error("❌ Failed to unsave place:", err);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -124,10 +140,13 @@ export default function ViewLocation({ navigation }) {
         <TouchableOpacity
           style={[
             styles.saveButton,
-            savedPlaces.includes(item.id) && styles.savedButton, // ✅ Apply style if already saved
+            savedPlaces.includes(item.id) && styles.savedButton,
           ]}
-          onPress={() => savePlace(item)}
-          disabled={savedPlaces.includes(item.id)} // ✅ Optional: disable button if saved
+          onPress={() =>
+            savedPlaces.includes(item.id)
+              ? unsavePlace(item)
+              : savePlace(item)
+          }
         >
           <Text style={styles.saveButtonText}>
             {savedPlaces.includes(item.id) ? "✅ Saved" : "Save to Planner"}

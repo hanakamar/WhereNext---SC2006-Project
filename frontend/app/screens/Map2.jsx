@@ -149,6 +149,9 @@ export default function MApp() {
     try {
       await axios.post(`${API_BASE_URL}/api/saved`, { email, place: payload });
       setSavedPlaces((prev) => [...prev, payload.id]);
+      const updated = [...savedPlaces, place];
+      SharedData.setSavedPlaces(updated);
+      setSavedPlaces(updated);
     } catch (err) {
       console.error("❌ Failed to save place:", err);
     }
@@ -242,6 +245,24 @@ export default function MApp() {
       Alert.alert("Error", "Failed to refresh area data.");
     } finally {
       setLoading(false);
+    }
+  };
+  const unsavePlace = async (placeId) => {
+    const email = await AsyncStorage.getItem("userEmail");
+    console.log(email, placeId);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/saved`, {
+        data: { email, placeId },
+      });
+      
+  
+      const updated = savedPlaces.filter((p) => p.id !== placeId);
+      SharedData.setSavedPlaces(updated);
+      setSavedPlaces(updated);
+  
+      console.log("🗑️ Place unsaved:", placeId);
+    } catch (error) {
+      console.error("❌ Failed to unsave place:", error);
     }
   };
 
@@ -363,11 +384,18 @@ export default function MApp() {
                   </Text>
                 )}
                 <TouchableOpacity
-                  style={styles.saveButton}
-                  onPress={() => savePlace(place)}
+                  style={[
+                    styles.saveButton,
+                    savedPlaces.some((p) => p.id === place.id) && styles.savedButton,
+                  ]}
+                  onPress={() =>
+                    savedPlaces.some((p) => p.id === place.id)
+                      ? unsavePlace(place.id)
+                      : savePlace(place)
+                  }
                 >
                   <Text style={styles.saveButtonText}>
-                    {savedPlaces.includes(place.id) ? "Saved" : "Save"}
+                    {savedPlaces.some((p) => p.id === place.id) ? "✅ Saved" : "Save"}
                   </Text>
                 </TouchableOpacity>
               </TouchableOpacity>

@@ -55,22 +55,32 @@ exports.getSavedPlaces = async (req, res) => {
 exports.deletePlace = async (req, res) => {
     try {
       const { email, placeId } = req.body;
-
+      console.log("🛠 DELETE request received:", { email, placeId });
+  
       if (!email || !placeId) {
         return res.status(400).json({ error: "Missing email or place ID" });
       }
-
+  
       const user = await SavedPlace.findOne({ email });
       if (!user) {
+        console.log("❌ User not found:", email);
         return res.status(404).json({ error: "User not found" });
       }
-
-      user.savedPlaces = user.savedPlaces.filter(p => p.id !== placeId);
+  
+      const beforeCount = user.savedPlaces.length;
+      user.savedPlaces = user.savedPlaces.filter((p) => p.id !== placeId);
+      const afterCount = user.savedPlaces.length;
+  
+      if (beforeCount === afterCount) {
+        console.log("❌ Place ID not found in user's list:", placeId);
+        return res.status(404).json({ error: "Place not found for this user" });
+      }
+  
       await user.save();
-
+      console.log("✅ Place removed:", placeId);
       res.status(200).json({ message: "Place deleted successfully" });
     } catch (err) {
-      console.error("Error deleting place:", err);
+      console.error("🚨 Error deleting place:", err);
       res.status(500).json({ error: "Server error" });
     }
-};
+  };
