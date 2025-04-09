@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Alert, TouchableOpacity, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect } from "react";
@@ -94,6 +94,7 @@ const UserProfile = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      <View style={styles.statusSpacer} />
       <Text style={styles.title}>User Profile</Text>
 
       {/* User Details Section */}
@@ -151,6 +152,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 25,
   },
+    statusSpacer: {
+        height: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 12,
+      },
   loginButtonText: {
     color: "#FFFFFF",
     fontSize: 16,

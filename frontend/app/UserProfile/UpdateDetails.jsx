@@ -105,6 +105,7 @@ const UpdateDetails = () => {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <View style={styles.statusSpacer} />
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <Text style={styles.title}>Update Details</Text>
 
@@ -155,6 +156,7 @@ const UpdateDetails = () => {
             value={password}
             onChangeText={setPassword}
             placeholder="Current password"
+            placeholderTextColor={"black"}
             secureTextEntry
           />
           <TextInput
@@ -162,6 +164,7 @@ const UpdateDetails = () => {
             value={newPassword}
             onChangeText={setNewPassword}
             placeholder="New password"
+            placeholderTextColor={"black"}
             secureTextEntry
           />
           <TouchableOpacity
@@ -189,6 +192,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#F5F5F5",
+  },
+  statusSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 12,
   },
   scrollViewContainer: {
     padding: 20,
@@ -269,7 +275,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   backButton: {
-    backgroundColor: "#6c757d",
+    backgroundColor: "black",
     padding: 15,
     borderRadius: 10,
     alignItems: "center",

@@ -265,6 +265,7 @@ export default function Catalogue({ navigation }) {
         <TextInput
           style={styles.searchBar}
           placeholder="Search..."
+          placeholderTextColor={"black"}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />

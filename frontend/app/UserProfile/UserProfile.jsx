@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Alert, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 
 const UserProfile = () => {
@@ -38,6 +38,7 @@ const UserProfile = () => {
 
   return (
     <View style={styles.container}>
+    <View style={styles.statusSpacer} />
       <Text style={styles.title}>User Profile</Text>
       
       {/* User Details Section */}
@@ -103,6 +104,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
   },
+    statusSpacer: {
+        height: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 12,
+      },
   detailRow: {
     flexDirection: 'row',
     paddingVertical: 10,
