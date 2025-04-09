@@ -22,7 +22,7 @@ import RNHTMLtoPDF from "react-native-html-to-pdf";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as Print from 'expo-print';
+import * as Print from "expo-print";
 import SharedData from "../SharedData";
 
 // ... (same imports as before)
@@ -45,7 +45,6 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   const [pdfDate, setPdfDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-
   useEffect(() => {
     const checkLoginStatus = async () => {
       const loginStatus = await AsyncStorage.getItem("isLoggedIn");
@@ -56,27 +55,26 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     checkLoginStatus();
   }, []);
 
-  useEffect(() => {
-    const fetchSavedPlaces = async () => {
-      if (!email) return;
-      try {
-        const res = await axios.get(`${API_BASE_URL}/api/saved`, {
-          params: { email },
-        });
-        const saved = res.data.savedPlaces || [];
-        SharedData.setSavedPlaces(saved); // update global state
-        setLocalSavedPlaces(saved);       // update local state
-        console.log(saved);
-        console.log("✅ Saved places fetched:", saved.length);
-      } catch (err) {
-        console.error("❌ Failed to load saved places:", err);
-      }
-    };
+  const fetchSavedPlaces = async () => {
+    if (!email) return;
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/saved`, {
+        params: { email },
+      });
+      const saved = res.data.savedPlaces || [];
+      SharedData.setSavedPlaces(saved); // update global state
+      setLocalSavedPlaces(saved); // update local state
+      console.log(saved);
+      console.log("✅ Saved places fetched:", saved.length);
+    } catch (err) {
+      console.error("❌ Failed to load saved places:", err);
+    }
+  };
 
+  useEffect(() => {
     if (isLoggedIn) {
       fetchSavedPlaces();
     }
-    
 
     const keyboardWillShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
@@ -98,17 +96,16 @@ const DailyPlanner = ({ navigation, userLocation }) => {
       setSearchResults([]);
       return;
     }
-  
+
     setIsSearching(true);
-    console.log("🔍 Searching in:",localSavedPlaces);
+    console.log("🔍 Searching in:", localSavedPlaces);
     const matchedSavedPlaces = localSavedPlaces.filter((place) =>
       place.name.toLowerCase().includes(query.toLowerCase())
     );
-  
+
     setSearchResults(matchedSavedPlaces);
     setIsSearching(false);
   };
-
 
   const addPlan = () => {
     if (!newPlanTitle.trim() || !newPlanPlace) return;
@@ -129,6 +126,9 @@ const DailyPlanner = ({ navigation, userLocation }) => {
 
     // Here you would save to AsyncStorage
   };
+  const handleRefresh = () => {
+    fetchSavedPlaces();
+  };
 
   const checkIfOpenAtTime = (place, time) => {
     // This would be implemented with actual opening hours data
@@ -136,7 +136,6 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     const hour = time.getHours();
     return hour >= 8 && hour <= 22; // Assuming most places open 8am-10pm
   };
-
 
   const resetNewPlanForm = () => {
     setNewPlanTitle("");
@@ -147,7 +146,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   };
   const generateItineraryText = () => {
     if (plans.length === 0) return "No plans yet.";
-  
+
     return plans
       .sort((a, b) => a.time - b.time)
       .map((plan, index) => {
@@ -155,7 +154,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
         const title = plan.title;
         const name = plan.place?.name || "Custom Place";
         const address = plan.place?.address || "No address provided";
-  
+
         return `${index + 1}. ${title} — ${time}
   📍 ${name}
   🏠 ${address}\n`;
@@ -268,7 +267,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   const handleExportToPDF = () => {
     setShowPdfDateModal(true);
   };
-  
+
   const generatePDF = async () => {
     const formattedPlans = plans
       .sort((a, b) => a.time - b.time)
@@ -277,40 +276,55 @@ const DailyPlanner = ({ navigation, userLocation }) => {
           <div style="margin-bottom: 10px;">
             <strong>${format(new Date(plan.time), "h:mm a")}:</strong> 
             <div>${plan.title} - ${plan.place.name}</div>
-            <div style="font-size: 12px; color: gray;">${plan.place.address}</div>
+            <div style="font-size: 12px; color: gray;">${
+              plan.place.address
+            }</div>
           </div>
         `
       )
       .join("");
-  
+
     const htmlContent = `
-      <h1 style="text-align:center;">Daily Plan - ${format(pdfDate, "dd MMM yyyy")}</h1>
+      <h1 style="text-align:center;">Daily Plan - ${format(
+        pdfDate,
+        "dd MMM yyyy"
+      )}</h1>
       <div style="margin-top: 20px;">
         ${formattedPlans}
       </div>
     `;
-  
+
     try {
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
-  
+
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri);
       } else {
         alert("Sharing not supported on this device");
       }
-  
+
       setShowPdfDateModal(false);
     } catch (err) {
       console.error("PDF generation failed", err);
     }
   };
-  
-  
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          },
+        ]}
+      >
         <Text style={styles.headerTitle}>My Plan</Text>
+        <TouchableOpacity onPress={handleRefresh}>
+          <Ionicons name="refresh" size={24} color="#4a7cff" />
+        </TouchableOpacity>
       </View>
 
       {plans.length === 0 ? (
@@ -328,23 +342,24 @@ const DailyPlanner = ({ navigation, userLocation }) => {
           contentContainerStyle={styles.planListContent}
           showsVerticalScrollIndicator={false}
         />
-        
       )}
       {plans.length > 0 && (
-  <TouchableOpacity
-    style={{
-      marginHorizontal: 24,
-      marginBottom: 80,
-      backgroundColor: "#007bff",
-      padding: 14,
-      borderRadius: 10,
-      alignItems: "center",
-    }}
-    onPress={handleExportToPDF}
-  >
-    <Text style={{ color: "#fff", fontWeight: "600" }}>Save Plan as PDF</Text>
-  </TouchableOpacity>
-)}
+        <TouchableOpacity
+          style={{
+            marginHorizontal: 24,
+            marginBottom: 80,
+            backgroundColor: "#007bff",
+            padding: 14,
+            borderRadius: 10,
+            alignItems: "center",
+          }}
+          onPress={handleExportToPDF}
+        >
+          <Text style={{ color: "#fff", fontWeight: "600" }}>
+            Save Plan as PDF
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <TouchableOpacity
         style={styles.addButton}
@@ -354,53 +369,75 @@ const DailyPlanner = ({ navigation, userLocation }) => {
       </TouchableOpacity>
 
       <Modal
-  visible={showPdfDateModal}
-  transparent
-  animationType="fade"
-  onRequestClose={() => setShowPdfDateModal(false)}
->
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
-    <View style={{ backgroundColor: "#fff", padding: 24, borderRadius: 12, width: "80%" }}>
-      <Text style={{ fontWeight: "600", fontSize: 16, marginBottom: 12 }}>Choose Date for PDF</Text>
-
-      <TouchableOpacity
-        onPress={() => setShowDatePicker(true)}
-        style={{
-          padding: 12,
-          borderWidth: 1,
-          borderColor: "#ccc",
-          borderRadius: 8,
-          marginBottom: 20,
-          alignItems: "center",
-        }}
+        visible={showPdfDateModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPdfDateModal(false)}
       >
-        <Text style={{ fontSize: 16 }}>
-          {format(pdfDate, "dd MMM yyyy")}
-        </Text>
-      </TouchableOpacity>
-
-      {showDatePicker && (
-        <DateTimePicker
-          value={pdfDate}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setPdfDate(selectedDate);
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0,0,0,0.5)",
           }}
-        />
-      )}
+        >
+          <View
+            style={{
+              backgroundColor: "#fff",
+              padding: 24,
+              borderRadius: 12,
+              width: "80%",
+            }}
+          >
+            <Text style={{ fontWeight: "600", fontSize: 16, marginBottom: 12 }}>
+              Choose Date for PDF
+            </Text>
 
-      <TouchableOpacity
-        onPress={generatePDF}
-        style={{ backgroundColor: "#007bff", padding: 12, borderRadius: 8, alignItems: "center" }}
-      >
-        <Text style={{ color: "#fff", fontWeight: "600" }}>Generate PDF</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              style={{
+                padding: 12,
+                borderWidth: 1,
+                borderColor: "#ccc",
+                borderRadius: 8,
+                marginBottom: 20,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ fontSize: 16 }}>
+                {format(pdfDate, "dd MMM yyyy")}
+              </Text>
+            </TouchableOpacity>
 
+            {showDatePicker && (
+              <DateTimePicker
+                value={pdfDate}
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker(false);
+                  if (selectedDate) setPdfDate(selectedDate);
+                }}
+              />
+            )}
+
+            <TouchableOpacity
+              onPress={generatePDF}
+              style={{
+                backgroundColor: "#007bff",
+                padding: 12,
+                borderRadius: 8,
+                alignItems: "center",
+              }}
+            >
+              <Text style={{ color: "#fff", fontWeight: "600" }}>
+                Generate PDF
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Add Plan Modal */}
       <Modal
@@ -534,24 +571,28 @@ const DailyPlanner = ({ navigation, userLocation }) => {
               </View>
 
               {searchQuery.length > 0 && (
-              <View style={styles.searchResultsContainer}>
-                {isSearching ? (
-                  <Text style={styles.searchingText}>Searching...</Text>
-                ) : searchResults.length > 0 ? (
-                  <View style={styles.searchResultsList}>
-                  {searchResults.map((item) => (
-                    <View key={item.id}>{renderSearchResultItem({ item })}</View>
-                  ))}
+                <View style={styles.searchResultsContainer}>
+                  {isSearching ? (
+                    <Text style={styles.searchingText}>Searching...</Text>
+                  ) : searchResults.length > 0 ? (
+                    <View style={styles.searchResultsList}>
+                      {searchResults.map((item) => (
+                        <View key={item.id}>
+                          {renderSearchResultItem({ item })}
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.searchingText}>No results found</Text>
+                  )}
                 </View>
-                ) : (
-                  <Text style={styles.searchingText}>No results found</Text>
-                )}
-              </View>
-            )}
+              )}
 
               {newPlanPlace && (
                 <View style={styles.selectedPlaceContainer}>
-                  <Text style={styles.selectedPlaceTitle}>Selected Place / Acitivity:</Text>
+                  <Text style={styles.selectedPlaceTitle}>
+                    Selected Place / Acitivity:
+                  </Text>
                   <Text style={styles.selectedPlaceName}>
                     {newPlanPlace.name}
                   </Text>
@@ -572,7 +613,11 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                     });
                   }}
                 >
-                  <Ionicons name="add-circle-outline" size={20} color="#007bff" />
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={20}
+                    color="#007bff"
+                  />
                   <Text style={styles.customOptionText}>
                     Use "{searchQuery.trim()}" without location
                   </Text>
@@ -712,7 +757,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     fontSize: 14,
   },
-  
+
   customOptionButton: {
     flexDirection: "row",
     alignItems: "center",

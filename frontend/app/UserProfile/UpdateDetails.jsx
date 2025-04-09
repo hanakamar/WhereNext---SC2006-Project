@@ -38,16 +38,14 @@ const UpdateDetails = () => {
         `${config.API_URL}/api/profile/updateName/${email}`,
         {
           newName: name,
-        },
-        {
-          headers: {
-            Authorization: `Bearer YOUR_JWT_TOKEN_HERE`, // Replace with the actual JWT token
-          },
         }
       );
 
       setMessage(response.data.message);
       setMessageType("success");
+      setTimeout(() => {
+        navigation.navigate("UserProfile", { refresh: true });
+      }, 2000); // 2000ms = 2 seconds
     } catch (error) {
       setMessage(error.response?.data?.message || "An error occurred");
       setMessageType("error");
@@ -92,6 +90,9 @@ const UpdateDetails = () => {
       setMessageType("success");
       setPassword("");
       setNewPassword("");
+      setTimeout(() => {
+        navigation.navigate("UserProfile");
+      }, 2000); // 2000ms = 2 seconds
     } catch (error) {
       console.log("Error updating password:", error);
       setMessage(error.response?.data?.message || "An error occurred");
