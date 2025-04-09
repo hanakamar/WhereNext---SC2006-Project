@@ -453,9 +453,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
   },
-  detailText: { fontSize: 12, color: "#555" },
-  info: { fontSize: 12, color: "gray", textAlign: "center" },
-  distanceText: { fontSize: 11, color: "#888", textAlign: "center" },
+  detailText: { fontSize: 12, color: "#4F4F4F" },
+  info: { fontSize: 12, color: "#4F4F4F", textAlign: "center" },
+  distanceText: { fontSize: 11, color: "#4F4F4F", textAlign: "center" },
   statusSpacer: {
       height: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 12,
     },
