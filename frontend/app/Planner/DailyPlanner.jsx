@@ -20,12 +20,13 @@ import axios from "axios";
 import { API_BASE_URL } from "@env"; // Ensure you have this in your .env file
 import * as Clipboard from "expo-clipboard";
 import * as ToastAndroid from "react-native";
+import SharedData from "../SharedData";
 
 // ... (same imports as before)
 
 const DailyPlanner = ({ navigation, userLocation }) => {
   const [plans, setPlans] = useState([]);
-  const [savedPlaces, setSavedPlaces] = useState([]); // ✅ Local state for saved locations
+  const savedPlaces = SharedData.getSavedPlaces() || [];
   const [showAddModal, setShowAddModal] = useState(false);
   const [newPlanTitle, setNewPlanTitle] = useState("");
   const [newPlanTime, setNewPlanTime] = useState(new Date());
@@ -35,6 +36,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [localSavedPlaces, setLocalSavedPlaces] = useState([]);
   const [email, setEmail] = useState("");
 
   useEffect(() => {
@@ -55,7 +57,9 @@ const DailyPlanner = ({ navigation, userLocation }) => {
           params: { email },
         });
         const saved = res.data.savedPlaces || [];
-        setSavedPlaces(saved);
+        SharedData.setSavedPlaces(saved); // update global state
+        setLocalSavedPlaces(saved);       // update local state
+        console.log(saved);
         console.log("✅ Saved places fetched:", saved.length);
       } catch (err) {
         console.error("❌ Failed to load saved places:", err);
@@ -87,14 +91,13 @@ const DailyPlanner = ({ navigation, userLocation }) => {
       setSearchResults([]);
       return;
     }
+  
     setIsSearching(true);
-
-    const matchedSavedPlaces = savedPlaces.filter((place) =>
+    console.log("🔍 Searching in:",localSavedPlaces);
+    const matchedSavedPlaces = localSavedPlaces.filter((place) =>
       place.name.toLowerCase().includes(query.toLowerCase())
     );
-
-    // You can optionally fetch from external APIs and merge if needed
-
+  
     setSearchResults(matchedSavedPlaces);
     setIsSearching(false);
   };
@@ -120,12 +123,6 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     // Here you would save to AsyncStorage
   };
 
-  const checkIfOpenAtTime = (place, time) => {
-    // This would be implemented with actual opening hours data
-    // For demo, we'll return a reasonable assumption
-    const hour = time.getHours();
-    return hour >= 8 && hour <= 22; // Assuming most places open 8am-10pm
-  };
 
   const resetNewPlanForm = () => {
     setNewPlanTitle("");
