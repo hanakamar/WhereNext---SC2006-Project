@@ -28,7 +28,7 @@ import * as Print from 'expo-print';
 
 const DailyPlanner = ({ navigation, userLocation }) => {
   const [plans, setPlans] = useState([]);
-  const [savedPlaces, setSavedPlaces] = useState([]); // ✅ Local state for saved locations
+  const savedPlaces = SharedData.getSavedPlaces() || [];
   const [showAddModal, setShowAddModal] = useState(false);
   const [newPlanTitle, setNewPlanTitle] = useState("");
   const [newPlanTime, setNewPlanTime] = useState(new Date());
@@ -38,6 +38,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [localSavedPlaces, setLocalSavedPlaces] = useState([]);
   const [email, setEmail] = useState("");
   const [showPdfDateModal, setShowPdfDateModal] = useState(false);
   const [pdfDate, setPdfDate] = useState(new Date());
@@ -62,7 +63,9 @@ const DailyPlanner = ({ navigation, userLocation }) => {
           params: { email },
         });
         const saved = res.data.savedPlaces || [];
-        setSavedPlaces(saved);
+        SharedData.setSavedPlaces(saved); // update global state
+        setLocalSavedPlaces(saved);       // update local state
+        console.log(saved);
         console.log("✅ Saved places fetched:", saved.length);
       } catch (err) {
         console.error("❌ Failed to load saved places:", err);
@@ -94,14 +97,13 @@ const DailyPlanner = ({ navigation, userLocation }) => {
       setSearchResults([]);
       return;
     }
+  
     setIsSearching(true);
-
-    const matchedSavedPlaces = savedPlaces.filter((place) =>
+    console.log("🔍 Searching in:",localSavedPlaces);
+    const matchedSavedPlaces = localSavedPlaces.filter((place) =>
       place.name.toLowerCase().includes(query.toLowerCase())
     );
-
-    // You can optionally fetch from external APIs and merge if needed
-
+  
     setSearchResults(matchedSavedPlaces);
     setIsSearching(false);
   };
@@ -127,12 +129,6 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     // Here you would save to AsyncStorage
   };
 
-  const checkIfOpenAtTime = (place, time) => {
-    // This would be implemented with actual opening hours data
-    // For demo, we'll return a reasonable assumption
-    const hour = time.getHours();
-    return hour >= 8 && hour <= 22; // Assuming most places open 8am-10pm
-  };
 
   const resetNewPlanForm = () => {
     setNewPlanTitle("");
@@ -140,6 +136,28 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     setNewPlanPlace(null);
     setSearchQuery("");
     setSearchResults([]);
+  };
+  const generateItineraryText = () => {
+    if (plans.length === 0) return "No plans yet.";
+  
+    return plans
+      .sort((a, b) => a.time - b.time)
+      .map((plan, index) => {
+        const time = format(new Date(plan.time), "h:mm a");
+        const title = plan.title;
+        const name = plan.place?.name || "Custom Place";
+        const address = plan.place?.address || "No address provided";
+  
+        return `${index + 1}. ${title} — ${time}
+  📍 ${name}
+  🏠 ${address}\n`;
+      })
+      .join("\n");
+  };
+  const copyItineraryToClipboard = () => {
+    const text = generateItineraryText();
+    Clipboard.setStringAsync(text);
+    alert("✅ Itinerary copied to clipboard!");
   };
 
   const navigateToPlaceDetails = (place) => {
@@ -302,23 +320,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
           contentContainerStyle={styles.planListContent}
           showsVerticalScrollIndicator={false}
         />
-        
       )}
-      {plans.length > 0 && (
-  <TouchableOpacity
-    style={{
-      marginHorizontal: 24,
-      marginBottom: 80,
-      backgroundColor: "#007bff",
-      padding: 14,
-      borderRadius: 10,
-      alignItems: "center",
-    }}
-    onPress={handleExportToPDF}
-  >
-    <Text style={{ color: "#fff", fontWeight: "600" }}>Save Plan as PDF</Text>
-  </TouchableOpacity>
-)}
 
       <TouchableOpacity
         style={styles.addButton}
@@ -415,7 +417,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                 value={newPlanTitle}
                 onChangeText={setNewPlanTitle}
                 placeholder="What are you planning?"
-                placeholderTextColor="#A0A0A0"
+                placeholderTextColor="#black"
               />
 
               <Text style={styles.inputLabel}>Time</Text>
@@ -482,7 +484,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                 </View>
               </View>
 
-              <Text style={styles.inputLabel}>Place</Text>
+              <Text style={styles.inputLabel}>Place / Custom Activity</Text>
               <View style={styles.searchContainer}>
                 <TextInput
                   style={styles.searchInput}
@@ -491,7 +493,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                     setSearchQuery(text);
                     searchPlaces(text);
                   }}
-                  placeholder="Search for a place"
+                  placeholder="Search for a place / Custom Activity"
                   placeholderTextColor="#A0A0A0"
                 />
                 {searchQuery.length > 0 && (
@@ -525,7 +527,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
 
               {newPlanPlace && (
                 <View style={styles.selectedPlaceContainer}>
-                  <Text style={styles.selectedPlaceTitle}>Selected Place:</Text>
+                  <Text style={styles.selectedPlaceTitle}>Selected Place / Acitivity:</Text>
                   <Text style={styles.selectedPlaceName}>
                     {newPlanPlace.name}
                   </Text>
@@ -561,7 +563,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                 onPress={addPlan}
                 disabled={!newPlanTitle.trim() || !newPlanPlace}
               >
-                <Text style={styles.addPlanButtonText}>Save Place</Text>
+                <Text style={styles.addPlanButtonText}>Save Plan</Text>
               </TouchableOpacity>
 
               {/* Add some extra padding at the bottom when keyboard is visible */}
@@ -670,6 +672,23 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginRight: 6,
   },
+  shareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center", // center it horizontally
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#007bff",
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  shareButtonText: {
+    color: "white",
+    fontWeight: "500",
+    fontSize: 14,
+  },
+  
   customOptionButton: {
     flexDirection: "row",
     alignItems: "center",
