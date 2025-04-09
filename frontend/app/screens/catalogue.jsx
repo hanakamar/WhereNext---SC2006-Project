@@ -9,6 +9,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Modal,
+  SafeAreaView,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
@@ -33,6 +35,7 @@ export default function Catalogue({ navigation }) {
   const router = useRouter();
   const [savedPlaceIds, setSavedPlaceIds] = useState([]);
   const [savedPlaceData, setSavedPlaceData] = useState([]);
+  const [showSortModal, setShowSortModal] = useState(false);
 
   useEffect(() => {
     if (SharedData.consumeRefreshFlag()) {
@@ -178,6 +181,55 @@ export default function Catalogue({ navigation }) {
     return 0;
   });
 
+  const renderSortModal = () => (
+    <Modal
+      visible={showSortModal}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setShowSortModal(false)}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={() => setShowSortModal(false)}
+      >
+        <View style={styles.modalContent}>
+          <Text style={styles.modalTitle}>Sort by</Text>
+          <TouchableOpacity
+            style={[
+              styles.sortOption,
+              sortOption === "distance" && styles.selectedSortOption,
+            ]}
+            onPress={() => {
+              setSortOption("distance");
+              setShowSortModal(false);
+            }}
+          >
+            <Text style={styles.sortOptionText}>Distance</Text>
+            {sortOption === "distance" && (
+              <Ionicons name="checkmark" size={20} color="#4a7cff" />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.sortOption,
+              sortOption === "rating" && styles.selectedSortOption,
+            ]}
+            onPress={() => {
+              setSortOption("rating");
+              setShowSortModal(false);
+            }}
+          >
+            <Text style={styles.sortOptionText}>Rating</Text>
+            {sortOption === "rating" && (
+              <Ionicons name="checkmark" size={20} color="#4a7cff" />
+            )}
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    </Modal>
+  );
+
   return (
     <View style={styles.container}>
       {/* Toggle Buttons */}
@@ -234,17 +286,19 @@ export default function Catalogue({ navigation }) {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-        <View style={styles.pickerContainer}>
-          <Picker
-            selectedValue={sortOption}
-            onValueChange={setSortOption}
-            style={styles.picker}
-          >
-            <Picker.Item label="Distance" value="distance" />
-            <Picker.Item label="Rating" value="rating" />
-          </Picker>
-        </View>
+        <TouchableOpacity
+          style={styles.sortButton}
+          onPress={() => setShowSortModal(true)}
+        >
+          <Text style={styles.sortButtonText}>
+            {sortOption === "distance" ? "Distance" : "Rating"}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color="#555" />
+        </TouchableOpacity>
       </View>
+
+      {/* Sort Modal */}
+      {renderSortModal()}
 
       {/* Loading Spinner */}
       {loading && selectedCategory === "food" && (
@@ -342,15 +396,58 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     paddingHorizontal: 10,
+    height: 40,
   },
-  pickerContainer: {
+  sortButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     width: 120,
     marginLeft: 10,
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 40,
+    backgroundColor: "#fff",
   },
-  picker: { height: 40, width: "100%" },
+  sortButtonText: {
+    color: "#555",
+    fontSize: 14,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderTopLeftRadius: 15,
+    borderTopRightRadius: 15,
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+    textAlign: "center",
+  },
+  sortOption: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 15,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  selectedSortOption: {
+    backgroundColor: "#f8f8ff",
+  },
+  sortOptionText: {
+    fontSize: 16,
+  },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   loadingText: { marginTop: 10, color: "#666" },
   card: {
