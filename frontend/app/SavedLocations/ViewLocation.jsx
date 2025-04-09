@@ -161,13 +161,11 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   image: {
-    width: 100,
-    height: 100,
-    borderRadius: 15,
-    alignSelf: "center",
+    width: "100%",
+    height: 200,
+    resizeMode: "cover",
+    borderRadius: 12,
     marginBottom: 20,
-    borderWidth: 2,
-    borderColor: "#000",
   },
   title: {
     fontSize: 24,

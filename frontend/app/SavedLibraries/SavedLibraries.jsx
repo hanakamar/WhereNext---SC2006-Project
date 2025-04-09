@@ -8,6 +8,9 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
+  SafeAreaView,
+  Platform,
+  StatusBar,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -54,7 +57,7 @@ const SavedLibraries = () => {
   const renderLocationItem = ({ item }) => (
     <TouchableOpacity
       style={styles.locationCard}
-      onPress={() => navigation.navigate('ViewLocation', { ...item })}
+      onPress={() => navigation.push('ViewLocation', { ...item })}
     >
       <Image
         source={{
@@ -73,46 +76,62 @@ const SavedLibraries = () => {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Saved Libraries</Text>
-        <TouchableOpacity onPress={handleRefresh}>
-          <Ionicons name="refresh" size={24} color="#4a7cff" />
-        </TouchableOpacity>
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.statusSpacer} />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Saved Libraries</Text>
+          <TouchableOpacity onPress={handleRefresh}>
+            <Ionicons name="refresh" size={24} color="#4a7cff" />
+          </TouchableOpacity>
+        </View>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4a7cff" />
-          <Text>Loading saved places...</Text>
-        </View>
-      ) : savedLocations.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No saved locations yet</Text>
-          <Text style={styles.emptyStateSubtext}>Save locations to see them here</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={savedLocations}
-          renderItem={renderLocationItem}
-          keyExtractor={(item, index) => item.id || `item-${index}`}
-          contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
-        />
-      )}
-    </View>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4a7cff" />
+            <Text>Loading saved places...</Text>
+          </View>
+        ) : savedLocations.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No saved locations yet</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Save locations to see them here
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={savedLocations}
+            renderItem={renderLocationItem}
+            keyExtractor={(item, index) => item.id || `item-${index}`}
+            contentContainerStyle={styles.listContainer}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            }
+          />
+        )}
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F5F5F5', padding: 16 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  statusSpacer: {
+    height: Platform.OS === 'android' ? StatusBar.currentHeight || 24 : 12,
+  },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+    marginTop: 5,
   },
   title: { fontSize: 24, fontWeight: 'bold', color: '#333' },
   listContainer: { paddingBottom: 20 },

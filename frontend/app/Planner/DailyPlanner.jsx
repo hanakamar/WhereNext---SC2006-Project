@@ -19,8 +19,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { API_BASE_URL } from "@env"; // Ensure you have this in your .env file
 
-const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
+// ... (same imports as before)
+
+const DailyPlanner = ({ navigation, userLocation }) => {
   const [plans, setPlans] = useState([]);
+  const [savedPlaces, setSavedPlaces] = useState([]); // ✅ Local state for saved locations
   const [showAddModal, setShowAddModal] = useState(false);
   const [newPlanTitle, setNewPlanTitle] = useState("");
   const [newPlanTime, setNewPlanTime] = useState(new Date());
@@ -29,11 +32,10 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false); // State for login status
-  const [email, setEmail] = useState(""); // State for user email
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
-    // Check if the user is logged in
     const checkLoginStatus = async () => {
       const loginStatus = await AsyncStorage.getItem("isLoggedIn");
       const userEmail = await AsyncStorage.getItem("userEmail");
@@ -44,26 +46,25 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
   }, []);
 
   useEffect(() => {
-    // Load saved plans (implement with AsyncStorage)
-    const fetchBookmarks = async () => {
-      if (isLoggedIn) {
-        try {
-          const response = await axios.get(
-            `${API_BASE_URL}/api/bookmark/?email=${email}`
-          );
-          const bookmarks = response.data;
-          console.log("Bookmarks loaded:", bookmarks);
-          //setPlans(bookmarks);       // Uncomment this line to set bookmarks as plans
-        } catch (error) {
-          console.error("❌ Failed to load bookmarks:", error);
-        }
+    const fetchSavedPlaces = async () => {
+      if (!email) return;
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/saved`, {
+          params: { email },
+        });
+        const saved = res.data.savedPlaces || [];
+        setSavedPlaces(saved);
+        console.log("✅ Saved places fetched:", saved.length);
+      } catch (err) {
+        console.error("❌ Failed to load saved places:", err);
       }
     };
+
     if (isLoggedIn) {
-      fetchBookmarks();
+      fetchSavedPlaces();
     }
-    loadSavedPlans();
-    // Set up keyboard listeners
+    
+
     const keyboardWillShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
       () => setKeyboardVisible(true)
@@ -73,97 +74,29 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
       () => setKeyboardVisible(false)
     );
 
-    // Clean up listeners
     return () => {
       keyboardWillShowListener.remove();
       keyboardWillHideListener.remove();
     };
-  }, []);
-
-  const loadSavedPlans = async () => {
-    // Here you would fetch plans from AsyncStorage
-    // For now, we'll use dummy data
-    const dummyPlans = [
-      {
-        id: "1",
-        title: "Lunch",
-        time: new Date().setHours(12, 30),
-        place: {
-          id: "place1",
-          name: "Bistro Cafe",
-          address: "123 Main St",
-          isOpen: true,
-        },
-      },
-      {
-        id: "2",
-        title: "Movie Night",
-        time: new Date().setHours(19, 0),
-        place: {
-          id: "place2",
-          name: "Grand Cinema",
-          address: "456 Park Ave",
-          isOpen: true,
-        },
-      },
-    ];
-    setPlans(dummyPlans);
-  };
+  }, [email, isLoggedIn]);
 
   const searchPlaces = async (query) => {
-    if (query.length < 2) {
+    if (query.length <= 0) {
       setSearchResults([]);
       return;
     }
-
     setIsSearching(true);
 
-    // Here you would call your Google Places API
-    // For demo, we'll use a mix of saved places and dummy data
+    const matchedSavedPlaces = savedPlaces.filter((place) =>
+      place.name.toLowerCase().includes(query.toLowerCase())
+    );
 
-    const matchedSavedPlaces = savedPlaces
-      ? savedPlaces.filter((place) =>
-          place.name.toLowerCase().includes(query.toLowerCase())
-        )
-      : [];
+    // You can optionally fetch from external APIs and merge if needed
 
-    // Simulating API call delay
-    setTimeout(() => {
-      const dummyApiResults = [
-        {
-          id: "g1",
-          name: "Green Park Restaurant",
-          address: "789 Green St",
-          isOpen: checkIfOpen(18, 22),
-        },
-        {
-          id: "g2",
-          name: "Blue Harbor Cafe",
-          address: "101 Ocean Blvd",
-          isOpen: checkIfOpen(7, 16),
-        },
-        {
-          id: "g3",
-          name: "Mountain View Hotel",
-          address: "202 Hill Rd",
-          isOpen: checkIfOpen(0, 24),
-        },
-      ].filter((place) =>
-        place.name.toLowerCase().includes(query.toLowerCase())
-      );
-
-      setSearchResults([...matchedSavedPlaces, ...dummyApiResults]);
-      setIsSearching(false);
-    }, 300);
+    setSearchResults(matchedSavedPlaces);
+    setIsSearching(false);
   };
 
-  const checkIfOpen = (openHour, closeHour) => {
-    // This is a placeholder. In a real implementation, you would:
-    // 1. Use the Google Places API to get actual opening hours
-    // 2. Compare with the planned time to determine if open
-    const currentHour = new Date().getHours();
-    return currentHour >= openHour && currentHour < closeHour;
-  };
 
   const addPlan = () => {
     if (!newPlanTitle.trim() || !newPlanPlace) return;
@@ -270,18 +203,6 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
           <Text style={styles.planTitle}>{item.title}</Text>
           <Text style={styles.placeName}>{item.place.name}</Text>
           <Text style={styles.placeAddress}>{item.place.address}</Text>
-
-          <View style={styles.statusContainer}>
-            <View
-              style={[
-                styles.statusIndicator,
-                { backgroundColor: item.place.isOpen ? "#4CAF50" : "#F44336" },
-              ]}
-            />
-            <Text style={styles.statusText}>
-              {item.place.isOpen ? "Open at this time" : "Closed at this time"}
-            </Text>
-          </View>
         </TouchableOpacity>
       </View>
 
@@ -470,22 +391,21 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
                 )}
               </View>
 
-              {isSearching ? (
-                <Text style={styles.searchingText}>Searching...</Text>
-              ) : (
-                searchResults.length > 0 && (
-                  <View style={styles.searchResultsContainer}>
-                    <FlatList
-                      data={searchResults}
-                      renderItem={renderSearchResultItem}
-                      keyExtractor={(item) => item.id}
-                      nestedScrollEnabled={true}
-                      style={styles.searchResultsList}
-                      keyboardShouldPersistTaps="handled"
-                    />
-                  </View>
-                )
-              )}
+              {searchQuery.length > 0 && (
+              <View style={styles.searchResultsContainer}>
+                {isSearching ? (
+                  <Text style={styles.searchingText}>Searching...</Text>
+                ) : searchResults.length > 0 ? (
+                  <View style={styles.searchResultsList}>
+                  {searchResults.map((item) => (
+                    <View key={item.id}>{renderSearchResultItem({ item })}</View>
+                  ))}
+                </View>
+                ) : (
+                  <Text style={styles.searchingText}>No results found</Text>
+                )}
+              </View>
+            )}
 
               {newPlanPlace && (
                 <View style={styles.selectedPlaceContainer}>
@@ -498,7 +418,24 @@ const DailyPlanner = ({ savedPlaces, navigation, userLocation }) => {
                   </Text>
                 </View>
               )}
-
+              {searchQuery.trim() !== "" && !newPlanPlace && (
+                <TouchableOpacity
+                  style={styles.customOptionButton}
+                  onPress={() => {
+                    setNewPlanPlace({
+                      id: `custom-${Date.now()}`,
+                      name: searchQuery.trim(),
+                      address: "",
+                      isCustom: true,
+                    });
+                  }}
+                >
+                  <Ionicons name="add-circle-outline" size={20} color="#007bff" />
+                  <Text style={styles.customOptionText}>
+                    Use "{searchQuery.trim()}" without location
+                  </Text>
+                </TouchableOpacity>
+              )}
               <TouchableOpacity
                 style={[
                   styles.addPlanButton,
@@ -616,6 +553,20 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     marginRight: 6,
+  },
+  customOptionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: "#EAF2FF",
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  customOptionText: {
+    color: "#007bff",
+    fontWeight: "500",
+    marginLeft: 8,
   },
   statusText: {
     fontSize: 12,
