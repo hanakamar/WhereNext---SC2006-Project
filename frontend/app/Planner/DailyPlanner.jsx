@@ -167,10 +167,10 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     alert("✅ Itinerary copied to clipboard!");
   };
 
-  const navigateToPlaceDetails = (place) => {
-    // Navigate to the place detail screen in your existing app
-    navigation.navigate("PlaceDetails", { placeId: place.id });
-  };
+  // const navigateToPlaceDetails = (place) => {
+  //   // Navigate to the place detail screen in your existing app
+  //   navigation.navigate("ViewLocation", { placeId: place.id });
+  // };
 
   const removePlan = (planId) => {
     setPlans(plans.filter((plan) => plan.id !== planId));
@@ -233,7 +233,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
       </View>
 
       <View style={styles.planContentContainer}>
-        <TouchableOpacity onPress={() => navigateToPlaceDetails(item.place)}>
+        <TouchableOpacity>
           <Text style={styles.planTitle}>{item.title}</Text>
           <Text style={styles.placeName}>{item.place.name}</Text>
           <Text style={styles.placeAddress}>{item.place.address}</Text>
