@@ -18,6 +18,8 @@ import { format } from "date-fns";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { API_BASE_URL } from "@env"; // Ensure you have this in your .env file
+import * as Clipboard from "expo-clipboard";
+import * as ToastAndroid from "react-native";
 
 // ... (same imports as before)
 
@@ -131,6 +133,28 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     setNewPlanPlace(null);
     setSearchQuery("");
     setSearchResults([]);
+  };
+  const generateItineraryText = () => {
+    if (plans.length === 0) return "No plans yet.";
+  
+    return plans
+      .sort((a, b) => a.time - b.time)
+      .map((plan, index) => {
+        const time = format(new Date(plan.time), "h:mm a");
+        const title = plan.title;
+        const name = plan.place?.name || "Custom Place";
+        const address = plan.place?.address || "No address provided";
+  
+        return `${index + 1}. ${title} — ${time}
+  📍 ${name}
+  🏠 ${address}\n`;
+      })
+      .join("\n");
+  };
+  const copyItineraryToClipboard = () => {
+    const text = generateItineraryText();
+    Clipboard.setStringAsync(text);
+    alert("✅ Itinerary copied to clipboard!");
   };
 
   const navigateToPlaceDetails = (place) => {
@@ -253,6 +277,13 @@ const DailyPlanner = ({ navigation, userLocation }) => {
         />
       )}
 
+      {plans.length > 0 && (
+        <TouchableOpacity style={styles.shareButton} onPress={copyItineraryToClipboard}>
+          <Ionicons name="copy-outline" size={20} color="#fff" style={{ marginRight: 15 }} />
+          <Text style={styles.shareButtonText}>Copy Itinerary</Text>
+        </TouchableOpacity>
+      )}
+
       <TouchableOpacity
         style={styles.addButton}
         onPress={() => setShowAddModal(true)}
@@ -299,7 +330,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                 value={newPlanTitle}
                 onChangeText={setNewPlanTitle}
                 placeholder="What are you planning?"
-                placeholderTextColor="#A0A0A0"
+                placeholderTextColor="#black"
               />
 
               <Text style={styles.inputLabel}>Time</Text>
@@ -366,7 +397,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                 </View>
               </View>
 
-              <Text style={styles.inputLabel}>Place</Text>
+              <Text style={styles.inputLabel}>Place / Custom Activity</Text>
               <View style={styles.searchContainer}>
                 <TextInput
                   style={styles.searchInput}
@@ -375,7 +406,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                     setSearchQuery(text);
                     searchPlaces(text);
                   }}
-                  placeholder="Search for a place"
+                  placeholder="Search for a place / Custom Activity"
                   placeholderTextColor="#A0A0A0"
                 />
                 {searchQuery.length > 0 && (
@@ -409,7 +440,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
 
               {newPlanPlace && (
                 <View style={styles.selectedPlaceContainer}>
-                  <Text style={styles.selectedPlaceTitle}>Selected Place:</Text>
+                  <Text style={styles.selectedPlaceTitle}>Selected Place / Acitivity:</Text>
                   <Text style={styles.selectedPlaceName}>
                     {newPlanPlace.name}
                   </Text>
@@ -445,7 +476,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                 onPress={addPlan}
                 disabled={!newPlanTitle.trim() || !newPlanPlace}
               >
-                <Text style={styles.addPlanButtonText}>Save Place</Text>
+                <Text style={styles.addPlanButtonText}>Save Plan</Text>
               </TouchableOpacity>
 
               {/* Add some extra padding at the bottom when keyboard is visible */}
@@ -554,6 +585,23 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginRight: 6,
   },
+  shareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "center", // center it horizontally
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#007bff",
+    borderRadius: 8,
+    marginBottom: 12,
+  },
+  shareButtonText: {
+    color: "white",
+    fontWeight: "500",
+    fontSize: 14,
+  },
+  
   customOptionButton: {
     flexDirection: "row",
     alignItems: "center",
