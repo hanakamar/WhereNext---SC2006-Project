@@ -320,7 +320,23 @@ const DailyPlanner = ({ navigation, userLocation }) => {
           contentContainerStyle={styles.planListContent}
           showsVerticalScrollIndicator={false}
         />
+        
       )}
+      {plans.length > 0 && (
+  <TouchableOpacity
+    style={{
+      marginHorizontal: 24,
+      marginBottom: 80,
+      backgroundColor: "#007bff",
+      padding: 14,
+      borderRadius: 10,
+      alignItems: "center",
+    }}
+    onPress={handleExportToPDF}
+  >
+    <Text style={{ color: "#fff", fontWeight: "600" }}>Save Plan as PDF</Text>
+  </TouchableOpacity>
+)}
 
       <TouchableOpacity
         style={styles.addButton}
