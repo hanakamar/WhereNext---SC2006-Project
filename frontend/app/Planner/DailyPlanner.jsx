@@ -24,7 +24,8 @@ import * as Sharing from "expo-sharing";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Print from 'expo-print';
 import SharedData from "../SharedData";
-
+import * as Clipboard from "expo-clipboard";
+import { Alert } from "react-native"; 
 // ... (same imports as before)
 
 const DailyPlanner = ({ navigation, userLocation }) => {
@@ -119,7 +120,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
       time: newPlanTime.getTime(),
       place: {
         ...newPlanPlace,
-        isOpen: checkIfOpenAtTime(newPlanPlace, newPlanTime), // Check if open at planned time
+        
       },
     };
 
@@ -128,13 +129,6 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     resetNewPlanForm();
 
     // Here you would save to AsyncStorage
-  };
-
-  const checkIfOpenAtTime = (place, time) => {
-    // This would be implemented with actual opening hours data
-    // For demo, we'll return a reasonable assumption
-    const hour = time.getHours();
-    return hour >= 8 && hour <= 22; // Assuming most places open 8am-10pm
   };
 
 
@@ -165,7 +159,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   const copyItineraryToClipboard = () => {
     const text = generateItineraryText();
     Clipboard.setStringAsync(text);
-    alert("✅ Itinerary copied to clipboard!");
+    Alert.alert("Copied!", "✅ Itinerary copied to clipboard.");
   };
 
   const navigateToPlaceDetails = (place) => {
@@ -283,11 +277,69 @@ const DailyPlanner = ({ navigation, userLocation }) => {
       )
       .join("");
   
-    const htmlContent = `
-      <h1 style="text-align:center;">Daily Plan - ${format(pdfDate, "dd MMM yyyy")}</h1>
-      <div style="margin-top: 20px;">
-        ${formattedPlans}
-      </div>
+      const htmlContent = `
+      <html>
+        <head>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 24px;
+              background-color: #f9f9f9;
+              color: #222;
+              font-size: 18px;
+            }
+            h1 {
+              text-align: center;
+              color: #007bff;
+              margin-bottom: 32px;
+              font-size: 26px;
+            }
+            .plan {
+              background: #ffffff;
+              padding: 20px;
+              border-radius: 12px;
+              margin-bottom: 20px;
+              box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            }
+            .time {
+              font-weight: bold;
+              font-size: 18px;
+              color: #007bff;
+              margin-bottom: 6px;
+            }
+            .title {
+              font-size: 18px;
+              font-weight: 600;
+              margin-bottom: 4px;
+            }
+            .place-name {
+              font-size: 16px;
+              color: #333;
+              margin-bottom: 2px;
+            }
+            .address {
+              font-size: 14px;
+              color: #777;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>🗓️ Daily Plan — ${format(pdfDate, "dd MMM yyyy")}</h1>
+          ${plans
+            .sort((a, b) => a.time - b.time)
+            .map(
+              (plan) => `
+                <div class="plan">
+                  <div class="time">🕒 ${format(new Date(plan.time), "h:mm a")}</div>
+                  <div class="title">${plan.title}</div>
+                  <div class="place-name">📍 ${plan.place.name}</div>
+                  <div class="address">🏠 ${plan.place.address}</div>
+                </div>
+              `
+            )
+            .join("")}
+        </body>
+      </html>
     `;
   
     try {
@@ -330,29 +382,73 @@ const DailyPlanner = ({ navigation, userLocation }) => {
         />
         
       )}
-      {plans.length > 0 && (
-  <TouchableOpacity
-    style={{
-      marginHorizontal: 24,
-      marginBottom: 80,
-      backgroundColor: "#007bff",
-      padding: 14,
-      borderRadius: 10,
-      alignItems: "center",
-    }}
-    onPress={handleExportToPDF}
-  >
-    <Text style={{ color: "#fff", fontWeight: "600" }}>Save Plan as PDF</Text>
-  </TouchableOpacity>
-)}
+      <View
+          style={{
+            position: "absolute",
+            bottom: 24,
+            left: 16,
+            right: 16,
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          {/* Left Side: Copy + PDF buttons only if there are plans */}
+          {plans.length > 0 ? (
+            <View style={{ flexDirection: "row", gap: 6 }}>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#007bff",
+                  paddingVertical: 10,
+                  paddingHorizontal: 10,
+                  borderRadius: 8,
+                }}
+                onPress={copyItineraryToClipboard}
+              >
+                <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>
+                  Copy to Clipboard
+                </Text>
+              </TouchableOpacity>
 
-      <TouchableOpacity
-        style={styles.addButton}
-        onPress={() => setShowAddModal(true)}
-      >
-        <Ionicons name="add" size={32} color="#FFFFFF" />
-      </TouchableOpacity>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#007bff",
+                  paddingVertical: 10,
+                  paddingHorizontal: 12,
+                  borderRadius: 8,
+                }}
+                onPress={handleExportToPDF}
+              >
+                <Text style={{ color: "#fff", fontWeight: "600", fontSize: 15 }}>
+                  Generate a PDF
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View />
+          )}
 
+          {/* Right Side: Add Button (always visible) */}
+          <TouchableOpacity
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 24,
+              backgroundColor: "#007bff",
+              justifyContent: "center",
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 3,
+              elevation: 5,
+            }}
+            onPress={() => setShowAddModal(true)}
+          >
+            <Ionicons name="add" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+            
       <Modal
   visible={showPdfDateModal}
   transparent
@@ -362,39 +458,62 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
     <View style={{ backgroundColor: "#fff", padding: 24, borderRadius: 12, width: "80%" }}>
       <Text style={{ fontWeight: "600", fontSize: 16, marginBottom: 12 }}>Choose Date for PDF</Text>
-
       <TouchableOpacity
-        onPress={() => setShowDatePicker(true)}
         style={{
-          padding: 12,
-          borderWidth: 1,
-          borderColor: "#ccc",
-          borderRadius: 8,
-          marginBottom: 20,
+          position: "absolute",
+          top: 16,
+          right: 16,
+          zIndex: 10,
+        }}
+        onPress={() => setShowPdfDateModal(false)}
+      >
+        <Ionicons name="close" size={24} color="#333" />
+      </TouchableOpacity>
+      <View
+        style={{
+          backgroundColor: "#FFFFFF", // white background for contrast
+          borderRadius: 12,
+          padding: 16,
           alignItems: "center",
+          marginBottom: 24,
+          shadowColor: "#000",
+          shadowOpacity: 0.1,
+          shadowOffset: { width: 0, height: 2 },
+          shadowRadius: 4,
+          elevation: 3,
         }}
       >
-        <Text style={{ fontSize: 16 }}>
-          {format(pdfDate, "dd MMM yyyy")}
+        <Text
+          style={{
+            fontSize: 18,
+            fontWeight: "600",
+            color: "#000000", // high contrast black text
+            marginBottom: 12,
+          }}
+        >
+          Select Date:
         </Text>
-      </TouchableOpacity>
 
-      {showDatePicker && (
         <DateTimePicker
           value={pdfDate}
           mode="date"
           display="default"
           onChange={(event, selectedDate) => {
-            setShowDatePicker(false);
             if (selectedDate) setPdfDate(selectedDate);
           }}
+          themeVariant="light" // For consistent light theme on iOS
+          style={{
+            transform: [{ scale: 1.25 }],
+          }}
         />
-      )}
+      </View>
 
       <TouchableOpacity
         onPress={generatePDF}
         style={{ backgroundColor: "#007bff", padding: 12, borderRadius: 8, alignItems: "center" }}
       >
+
+
         <Text style={{ color: "#fff", fontWeight: "600" }}>Generate PDF</Text>
       </TouchableOpacity>
     </View>
