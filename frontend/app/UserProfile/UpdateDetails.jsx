@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
   emailText: {
     fontSize: 16,
-    color: "#666",
+    color: "#4A4A4A",
     marginBottom: 10,
   },
   backButton: {

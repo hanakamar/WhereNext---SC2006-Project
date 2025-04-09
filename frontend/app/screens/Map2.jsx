@@ -133,7 +133,7 @@ export default function MApp() {
       Alert.alert("Login Required", "You need to be logged in to save places.");
       return;
     }
-
+  
     const payload = {
       id: place.id,
       name: place.name,
@@ -145,13 +145,15 @@ export default function MApp() {
       lng: place.lng,
       type: place.type || "restaurant",
     };
-
+  
     try {
       await axios.post(`${API_BASE_URL}/api/saved`, { email, place: payload });
-      setSavedPlaces((prev) => [...prev, payload.id]);
-      const updated = [...savedPlaces, place];
-      SharedData.setSavedPlaces(updated);
-      setSavedPlaces(updated);
+  
+      const updatedIds = [...savedPlaces, place.id];
+      setSavedPlaces(updatedIds);
+      SharedData.setSavedPlaces([...SharedData.getSavedPlaces(), payload]);
+  
+      console.log("✅ Place saved:", place.name);
     } catch (err) {
       console.error("❌ Failed to save place:", err);
     }
@@ -196,7 +198,12 @@ export default function MApp() {
         (saved) => !rawPlaces.some((place) => place.id === saved.id)
       );
 
-      const allPlaces = [...rawPlaces, ...uniqueSaved];
+      const allPlaces = [
+        ...rawPlaces,
+        ...fetchedSavedPlaces.filter(
+          (saved) => !rawPlaces.some((place) => place.id === saved.id)
+        ),
+      ];
 
       setFoodPlaces(allPlaces);
 
@@ -249,16 +256,16 @@ export default function MApp() {
   };
   const unsavePlace = async (placeId) => {
     const email = await AsyncStorage.getItem("userEmail");
-    console.log(email, placeId);
     try {
       await axios.delete(`${API_BASE_URL}/api/saved`, {
         data: { email, placeId },
       });
-      
   
-      const updated = savedPlaces.filter((p) => p.id !== placeId);
-      SharedData.setSavedPlaces(updated);
-      setSavedPlaces(updated);
+      const updatedIds = savedPlaces.filter((id) => id !== placeId);
+      setSavedPlaces(updatedIds);
+  
+      const updatedShared = SharedData.getSavedPlaces().filter((p) => p.id !== placeId);
+      SharedData.setSavedPlaces(updatedShared);
   
       console.log("🗑️ Place unsaved:", placeId);
     } catch (error) {
@@ -311,7 +318,7 @@ export default function MApp() {
                 pinColor={
                   selectedPlaceId === place.id
                     ? "dodgerblue"
-                    : isSaved
+                    : savedPlaces.includes(place.id)
                     ? "hotpink"
                     : "orange"
                 }
@@ -386,16 +393,16 @@ export default function MApp() {
                 <TouchableOpacity
                   style={[
                     styles.saveButton,
-                    savedPlaces.some((p) => p.id === place.id) && styles.savedButton,
+                    savedPlaces.includes(place.id) && styles.savedButton,
                   ]}
                   onPress={() =>
-                    savedPlaces.some((p) => p.id === place.id)
+                    savedPlaces.includes(place.id)
                       ? unsavePlace(place.id)
                       : savePlace(place)
                   }
                 >
                   <Text style={styles.saveButtonText}>
-                    {savedPlaces.some((p) => p.id === place.id) ? "✅ Saved" : "Save"}
+                    {savedPlaces.includes(place.id) ? "✅ Saved" : "Save"}
                   </Text>
                 </TouchableOpacity>
               </TouchableOpacity>

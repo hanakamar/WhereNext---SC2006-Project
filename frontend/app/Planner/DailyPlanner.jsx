@@ -26,6 +26,7 @@ import * as Print from "expo-print";
 import SharedData from "../SharedData";
 import * as Clipboard from "expo-clipboard";
 import { Alert } from "react-native"; 
+import { useFocusEffect } from "@react-navigation/native";
 // ... (same imports as before)
 
 const DailyPlanner = ({ navigation, userLocation }) => {
@@ -55,42 +56,46 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     };
     checkLoginStatus();
   }, []);
-
-  const fetchSavedPlaces = async () => {
-    if (!email) return;
+  
+  const fetchSavedPlaces = async (userEmail) => {
+    if (!userEmail) return;
     try {
       const res = await axios.get(`${API_BASE_URL}/api/saved`, {
-        params: { email },
+        params: { email: userEmail },
       });
       const saved = res.data.savedPlaces || [];
-      SharedData.setSavedPlaces(saved); // update global state
-      setLocalSavedPlaces(saved); // update local state
-      console.log(saved);
+      SharedData.setSavedPlaces(saved);
+      setLocalSavedPlaces(saved);
       console.log("✅ Saved places fetched:", saved.length);
     } catch (err) {
       console.error("❌ Failed to load saved places:", err);
     }
   };
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchSavedPlaces();
-    }
-
-    const keyboardWillShowListener = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
-      () => setKeyboardVisible(true)
-    );
-    const keyboardWillHideListener = Keyboard.addListener(
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide",
-      () => setKeyboardVisible(false)
-    );
-
-    return () => {
-      keyboardWillShowListener.remove();
-      keyboardWillHideListener.remove();
-    };
-  }, [email, isLoggedIn]);
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkAndFetch = async () => {
+        const loginStatus = await AsyncStorage.getItem("isLoggedIn");
+        const userEmail = await AsyncStorage.getItem("userEmail");
+        setEmail(userEmail);
+        setIsLoggedIn(loginStatus === "true");
+  
+        if (loginStatus === "true" && userEmail) {
+          fetchSavedPlaces(userEmail); // pass email directly
+        }
+      };
+  
+      checkAndFetch();
+  
+      const showSub = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+      const hideSub = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+  
+      return () => {
+        showSub.remove();
+        hideSub.remove();
+      };
+    }, [])
+  );
 
   const searchPlaces = async (query) => {
     if (query.length <= 0) {
@@ -571,7 +576,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                 value={newPlanTitle}
                 onChangeText={setNewPlanTitle}
                 placeholder="What are you planning?"
-                placeholderTextColor="#black"
+                placeholderTextColor="#36454F"
               />
 
               <Text style={styles.inputLabel}>Time</Text>
@@ -648,7 +653,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                     searchPlaces(text);
                   }}
                   placeholder="Search for a place / Custom Activity"
-                  placeholderTextColor="#A0A0A0"
+                  placeholderTextColor="#36454F"
                 />
                 {searchQuery.length > 0 && (
                   <TouchableOpacity
@@ -668,13 +673,13 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                   {isSearching ? (
                     <Text style={styles.searchingText}>Searching...</Text>
                   ) : searchResults.length > 0 ? (
-                    <View style={styles.searchResultsList}>
+                    <ScrollView style={{ maxHeight: 180 }}>
                       {searchResults.map((item) => (
                         <View key={item.id}>
                           {renderSearchResultItem({ item })}
                         </View>
                       ))}
-                    </View>
+                    </ScrollView>
                   ) : (
                     <Text style={styles.searchingText}>No results found</Text>
                   )}
@@ -771,7 +776,7 @@ const styles = StyleSheet.create({
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: "#888888",
+    color: "#4A4A4A",
     marginTop: 8,
   },
   planList: {
@@ -1023,12 +1028,12 @@ const styles = StyleSheet.create({
   searchResultName: {
     fontSize: 14,
     fontWeight: "500",
-    color: "#333333",
+    color: "#3007bff",
     marginBottom: 2,
   },
   searchResultAddress: {
     fontSize: 12,
-    color: "#888888",
+    color: "#33333",
   },
   selectedPlaceContainer: {
     backgroundColor: "#F0F8FF",
@@ -1056,7 +1061,7 @@ const styles = StyleSheet.create({
     color: "#666666",
   },
   addPlanButton: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#3898FF",
     borderRadius: 8,
     padding: 16,
     alignItems: "center",
@@ -1064,10 +1069,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   addPlanButtonDisabled: {
-    backgroundColor: "#CCCCCC",
+    backgroundColor: "rgb(236, 236, 236)",
   },
   addPlanButtonText: {
-    color: "#FFFFFF",
+    color: "#000000",
     fontSize: 16,
     fontWeight: "600",
   },
