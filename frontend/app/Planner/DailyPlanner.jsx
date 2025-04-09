@@ -22,7 +22,7 @@ import RNHTMLtoPDF from "react-native-html-to-pdf";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as Print from 'expo-print';
+import * as Print from "expo-print";
 import SharedData from "../SharedData";
 import * as Clipboard from "expo-clipboard";
 import { Alert } from "react-native"; 
@@ -46,7 +46,6 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   const [pdfDate, setPdfDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-
   useEffect(() => {
     const checkLoginStatus = async () => {
       const loginStatus = await AsyncStorage.getItem("isLoggedIn");
@@ -57,27 +56,26 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     checkLoginStatus();
   }, []);
 
-  useEffect(() => {
-    const fetchSavedPlaces = async () => {
-      if (!email) return;
-      try {
-        const res = await axios.get(`${API_BASE_URL}/api/saved`, {
-          params: { email },
-        });
-        const saved = res.data.savedPlaces || [];
-        SharedData.setSavedPlaces(saved); // update global state
-        setLocalSavedPlaces(saved);       // update local state
-        console.log(saved);
-        console.log("✅ Saved places fetched:", saved.length);
-      } catch (err) {
-        console.error("❌ Failed to load saved places:", err);
-      }
-    };
+  const fetchSavedPlaces = async () => {
+    if (!email) return;
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/saved`, {
+        params: { email },
+      });
+      const saved = res.data.savedPlaces || [];
+      SharedData.setSavedPlaces(saved); // update global state
+      setLocalSavedPlaces(saved); // update local state
+      console.log(saved);
+      console.log("✅ Saved places fetched:", saved.length);
+    } catch (err) {
+      console.error("❌ Failed to load saved places:", err);
+    }
+  };
 
+  useEffect(() => {
     if (isLoggedIn) {
       fetchSavedPlaces();
     }
-    
 
     const keyboardWillShowListener = Keyboard.addListener(
       Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow",
@@ -99,17 +97,16 @@ const DailyPlanner = ({ navigation, userLocation }) => {
       setSearchResults([]);
       return;
     }
-  
+
     setIsSearching(true);
-    console.log("🔍 Searching in:",localSavedPlaces);
+    console.log("🔍 Searching in:", localSavedPlaces);
     const matchedSavedPlaces = localSavedPlaces.filter((place) =>
       place.name.toLowerCase().includes(query.toLowerCase())
     );
-  
+
     setSearchResults(matchedSavedPlaces);
     setIsSearching(false);
   };
-
 
   const addPlan = () => {
     if (!newPlanTitle.trim() || !newPlanPlace) return;
@@ -130,6 +127,9 @@ const DailyPlanner = ({ navigation, userLocation }) => {
 
     // Here you would save to AsyncStorage
   };
+  const handleRefresh = () => {
+    fetchSavedPlaces();
+  };
 
 
   const resetNewPlanForm = () => {
@@ -141,7 +141,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   };
   const generateItineraryText = () => {
     if (plans.length === 0) return "No plans yet.";
-  
+
     return plans
       .sort((a, b) => a.time - b.time)
       .map((plan, index) => {
@@ -149,7 +149,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
         const title = plan.title;
         const name = plan.place?.name || "Custom Place";
         const address = plan.place?.address || "No address provided";
-  
+
         return `${index + 1}. ${title} — ${time}
   📍 ${name}
   🏠 ${address}\n`;
@@ -162,10 +162,10 @@ const DailyPlanner = ({ navigation, userLocation }) => {
     Alert.alert("Copied!", "✅ Itinerary copied to clipboard.");
   };
 
-  const navigateToPlaceDetails = (place) => {
-    // Navigate to the place detail screen in your existing app
-    navigation.navigate("PlaceDetails", { placeId: place.id });
-  };
+  // const navigateToPlaceDetails = (place) => {
+  //   // Navigate to the place detail screen in your existing app
+  //   navigation.navigate("ViewLocation", { placeId: place.id });
+  // };
 
   const removePlan = (planId) => {
     setPlans(plans.filter((plan) => plan.id !== planId));
@@ -228,7 +228,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
       </View>
 
       <View style={styles.planContentContainer}>
-        <TouchableOpacity onPress={() => navigateToPlaceDetails(item.place)}>
+        <TouchableOpacity>
           <Text style={styles.planTitle}>{item.title}</Text>
           <Text style={styles.placeName}>{item.place.name}</Text>
           <Text style={styles.placeAddress}>{item.place.address}</Text>
@@ -262,7 +262,7 @@ const DailyPlanner = ({ navigation, userLocation }) => {
   const handleExportToPDF = () => {
     setShowPdfDateModal(true);
   };
-  
+
   const generatePDF = async () => {
     const formattedPlans = plans
       .sort((a, b) => a.time - b.time)
@@ -271,7 +271,9 @@ const DailyPlanner = ({ navigation, userLocation }) => {
           <div style="margin-bottom: 10px;">
             <strong>${format(new Date(plan.time), "h:mm a")}:</strong> 
             <div>${plan.title} - ${plan.place.name}</div>
-            <div style="font-size: 12px; color: gray;">${plan.place.address}</div>
+            <div style="font-size: 12px; color: gray;">${
+              plan.place.address
+            }</div>
           </div>
         `
       )
@@ -341,28 +343,38 @@ const DailyPlanner = ({ navigation, userLocation }) => {
         </body>
       </html>
     `;
-  
+
     try {
       const { uri } = await Print.printToFileAsync({ html: htmlContent });
-  
+
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri);
       } else {
         alert("Sharing not supported on this device");
       }
-  
+
       setShowPdfDateModal(false);
     } catch (err) {
       console.error("PDF generation failed", err);
     }
   };
-  
-  
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+      <View
+        style={[
+          styles.header,
+          {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          },
+        ]}
+      >
         <Text style={styles.headerTitle}>My Plan</Text>
+        <TouchableOpacity onPress={handleRefresh}>
+          <Ionicons name="refresh" size={24} color="#4a7cff" />
+        </TouchableOpacity>
       </View>
 
       {plans.length === 0 ? (
@@ -380,7 +392,6 @@ const DailyPlanner = ({ navigation, userLocation }) => {
           contentContainerStyle={styles.planListContent}
           showsVerticalScrollIndicator={false}
         />
-        
       )}
       <View
           style={{
@@ -653,24 +664,28 @@ const DailyPlanner = ({ navigation, userLocation }) => {
               </View>
 
               {searchQuery.length > 0 && (
-              <View style={styles.searchResultsContainer}>
-                {isSearching ? (
-                  <Text style={styles.searchingText}>Searching...</Text>
-                ) : searchResults.length > 0 ? (
-                  <View style={styles.searchResultsList}>
-                  {searchResults.map((item) => (
-                    <View key={item.id}>{renderSearchResultItem({ item })}</View>
-                  ))}
+                <View style={styles.searchResultsContainer}>
+                  {isSearching ? (
+                    <Text style={styles.searchingText}>Searching...</Text>
+                  ) : searchResults.length > 0 ? (
+                    <View style={styles.searchResultsList}>
+                      {searchResults.map((item) => (
+                        <View key={item.id}>
+                          {renderSearchResultItem({ item })}
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.searchingText}>No results found</Text>
+                  )}
                 </View>
-                ) : (
-                  <Text style={styles.searchingText}>No results found</Text>
-                )}
-              </View>
-            )}
+              )}
 
               {newPlanPlace && (
                 <View style={styles.selectedPlaceContainer}>
-                  <Text style={styles.selectedPlaceTitle}>Selected Place / Acitivity:</Text>
+                  <Text style={styles.selectedPlaceTitle}>
+                    Selected Place / Acitivity:
+                  </Text>
                   <Text style={styles.selectedPlaceName}>
                     {newPlanPlace.name}
                   </Text>
@@ -691,7 +706,11 @@ const DailyPlanner = ({ navigation, userLocation }) => {
                     });
                   }}
                 >
-                  <Ionicons name="add-circle-outline" size={20} color="#007bff" />
+                  <Ionicons
+                    name="add-circle-outline"
+                    size={20}
+                    color="#007bff"
+                  />
                   <Text style={styles.customOptionText}>
                     Use "{searchQuery.trim()}" without location
                   </Text>
@@ -831,7 +850,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     fontSize: 14,
   },
-  
+
   customOptionButton: {
     flexDirection: "row",
     alignItems: "center",
