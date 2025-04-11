@@ -4,6 +4,7 @@ import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StatusBar } from 'react-native';
 import Icon from "react-native-vector-icons/Ionicons"; // Import the icon library
 
 import SplashScreen from "./screens/SplashScreen";

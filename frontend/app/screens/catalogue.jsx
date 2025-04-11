@@ -12,6 +12,7 @@ import {
   Modal,
   SafeAreaView,
   Platform,
+  StatusBar
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Alert, TouchableOpacity, Platform } from "react-native";
+import { View, Text, StyleSheet, Alert, TouchableOpacity, Platform, StatusBar } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect } from "react";
