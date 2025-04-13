@@ -3,6 +3,10 @@
 
 WhereNext is a React Native mobile app designed to make trip planning and navigation seamless. With an interactive map at its core, users can search for locations, save favorite spots (marked with red pins), create plans to share with friends, tracking, and discover nearby restaurants. Each place features rich info like images, ratings, and descriptions — all in one smooth interface.
 
+## Links 
+1. Demo Video: https://youtu.be/nYRxARZiDNo
+2. Software Requirement Specification: https://docs.google.com/document/d/16QcKyYS_uBq0GN4Hr0ZErj4uyvOb1jGZdpYcXjHxDo4/edit?usp=sharing
+
 ## Setup Instructions
 1. Ensure the following environment setup exists in your machine:
    - Node.js 
